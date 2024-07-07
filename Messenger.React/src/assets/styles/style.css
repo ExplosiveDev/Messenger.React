@@ -27,3 +27,11 @@ button:focus {
   outline: none;
   box-shadow: none !important;
 }
+#root{
+  display: flex;
+  justify-content: center;
+  background-color: rgb(21, 21, 21);
+}
+.main-menu{
+  width: 95%;
+}

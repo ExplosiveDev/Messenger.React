@@ -43,7 +43,6 @@ body {
 
 .input-container {
     display: flex;
-    padding: 10px;
 }
 
 .input-container input {
@@ -64,4 +63,17 @@ body {
 
 .text-color-main-menu{
     color: white;
+}
+
+.message-box {
+    display: inline-block;
+    padding: 10px 20px; 
+    border: 1px solid gray; 
+    border-radius: 20px; 
+    background-color: gray;
+    max-width: 80%; 
+    word-wrap: break-word; 
+}
+.my-message{
+    background-color: #3a8ef6;
 }
