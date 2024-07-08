@@ -77,3 +77,9 @@ body {
 .my-message{
     background-color: #3a8ef6;
 }
+.chat-name{
+    color: #3a8ef6;
+}
+.chat-hover{
+    transition: all 0.5s ease;
+}

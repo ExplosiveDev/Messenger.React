@@ -1,6 +1,4 @@
 import { FC, useEffect, useMemo, useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr'
 import { AuthContext } from './context/AuthContext'
 import MyRoutes from './pages/MyRoutes'
@@ -11,7 +9,7 @@ import { useMessage } from './hooks/message.hook'
 
 const App: FC = () => {
     const { login, logout, token, user } = useAuth();
-    const {connection, setConnection} = useMessage();
+    const {connection, setConnection, selectedChat, setSelectedChat} = useMessage();
     const isAuthenticated = !!token;
 
     useEffect(() => {
@@ -55,11 +53,13 @@ const App: FC = () => {
     return (
         <>
             <AuthContext.Provider value={{
+                selectedChat: selectedChat || null,
                 token: token || "",
                 user: user || null,
                 connection : connection || null,
                 login,
                 logout,
+                setSelectedChat,
                 isAuthenticated
             }}>
                 <MyRoutes isAuthenticated={isAuthenticated} user={user!} ></MyRoutes>

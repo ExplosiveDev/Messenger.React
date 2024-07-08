@@ -24,7 +24,7 @@ const ShowMessage: FC<MessageProps> = ({ Message }) => {
                     :
                     (
                         <div className="col-12 d-flex ">
-                            <div className="message-box  mt-2">{Message.content}</div>
+                            <div className="message-box mt-2">{Message.content}</div>
                         </div>
 
                     )
