@@ -12,6 +12,8 @@ const initState:User = {
     phone: '',
     passwordHash: '',
     roles: [],
+    messages:[],
+    chats:[]
 };
 
 export const useAuth = () => {
