@@ -19,7 +19,6 @@ function useIndexedDB(storeName: string, dbName: string = "myDatabase", version:
         const database = request.result;
         setDb(database);
         resolve(database);
-        console.log("Database is opened");
       };
 
       request.onerror = () => {

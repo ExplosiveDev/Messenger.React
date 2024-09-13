@@ -13,6 +13,7 @@ import '../assets/styles/style.css';
 import '../assets/styles/MainMenueStyles/MainMenue.css';
 import Message from "../Models/Message";
 import { getAllMessages } from "../services/messages";
+import useIndexedDB from "../hooks/indexedDb.hook";
 
 interface sendMessagePayload {
     message: string,
@@ -21,26 +22,38 @@ interface sendMessagePayload {
 
 const Messenger: FC = () => {
     const auth = useContext(AuthContext);
-    const { db, addData, addDataRange } = useContext(IndexedDBContext); // Використання IndexedDBContext
+
     const [searchChat, setSearchChat] = useState("");
     const [message, setMessage] = useState("");
     const [debouncedTerm, setDebouncedTerm] = useState(searchChat);
     const [chats, setChats] = useState<User[]>([]) // тимчасово User[]
     const [showModal, setShowModal] = useState(false);
+    const {openDb,getData,addData,addDataRange,db,} = useIndexedDB("Messages")
+
+    const [dbOpened, setDbOpened] = useState(false); // Стан для контролю, чи відкрито базу даних
 
     useEffect(() => {
-        const fetchMessages = async () => {
-            if (!db) {
-                console.error("Database is not initialized");
-                return;
-            }
-
+        const initDb = async () => {
             try {
-                console.log(auth.token);
-                const messages: Message[] = await getAllMessages(auth.token!);
-                console.log(messages);
+                await openDb();
+                setDbOpened(true); 
+                console.log("IndexedDB opened");
+            } catch (error) {
+                console.error("Error opening IndexedDB:", error);
+            }
+        };
 
-                // Виклик addDataRange тільки після успішного отримання повідомлень
+        initDb();
+    }, []); 
+
+    useEffect(() => {
+        if (!dbOpened || !auth.token) return; 
+
+        const fetchMessages = async () => {
+            await openDb()
+            try {
+                const messages: Message[] = await getAllMessages(auth.token!);
+
                 if (messages.length > 0) {
                     await addDataRange(messages);
                 }
@@ -49,10 +62,8 @@ const Messenger: FC = () => {
             }
         };
 
-        if (db) { // Перевірка чи БД відкрита
-            fetchMessages(); // Отримуємо повідомлення тільки після того, як БД відкрита
-        }
-    }, [db]);
+        fetchMessages();
+    }, [dbOpened, auth.token]);
 
     useEffect(() => {
         const handler = setTimeout(() => {

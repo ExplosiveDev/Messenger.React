@@ -62,9 +62,9 @@ const App: React.FC = () => {
         isAuthenticated,
       }}
     >
-      <IndexedDBProvider>
+      {/* <IndexedDBProvider> */}
         <MyRoutes isAuthenticated={isAuthenticated} user={user!} />
-      </IndexedDBProvider>
+      {/* </IndexedDBProvider> */}
     </AuthContext.Provider>
   );
 };
