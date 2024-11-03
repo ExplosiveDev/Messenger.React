@@ -1,19 +1,17 @@
-import { HubConnection } from '@microsoft/signalr';
-import { useCallback, useEffect, useState } from 'react';
-import User from '../Models/User';
+import { useCallback, useState } from "react";
+import Message from "../Models/Message";
 
 export const useMessage = () => {
-    const [connection, _setConnection] = useState<HubConnection | null>(null);
-    const [selectedChat, _setSelectedChat] = useState<User | null>();
+    const [messages, setMessages] = useState<Message[]>([]);
 
-    const setConnection = useCallback( (newConnection: HubConnection | null) : void => {
-        _setConnection(newConnection);
-    },[])
-    const setSelectedChat = useCallback( (user : User) => {
-        if(user != null){
-            _setSelectedChat(user);
+    const addNewMessage = useCallback( (newMessage: Message | null) : void => {
+        if(newMessage != null)
+        {
+            setMessages((prevMessages) => [...prevMessages, newMessage]); 
+            console.log("messages update (message.hook.ts)")            
         }
     },[])
+              
 
-    return {connection,setConnection,selectedChat,setSelectedChat};
+    return {messages, addNewMessage};
 }

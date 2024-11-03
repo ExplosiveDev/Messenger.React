@@ -1,6 +1,5 @@
 import { ChangeEvent, FC, FormEvent, MouseEvent, useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { IndexedDBContext } from "../context/IndexedDbContext"; // Імпорт контексту
 import RenderMessages from "../components/RenderMessages";
 import User from "../Models/User";
 import axios from "axios";
@@ -14,14 +13,17 @@ import '../assets/styles/MainMenueStyles/MainMenue.css';
 import Message from "../Models/Message";
 import { getAllMessages } from "../services/messages";
 import useIndexedDB from "../hooks/indexedDb.hook";
+import { MessageContex } from "../context/MessageContext";
 
 interface sendMessagePayload {
     message: string,
-    userId: string
+    senderUserId: string
+    receiverUserId: string
 }
 
 const Messenger: FC = () => {
     const auth = useContext(AuthContext);
+    const messages = useContext(MessageContex);
 
     const [searchChat, setSearchChat] = useState("");
     const [message, setMessage] = useState("");
@@ -45,6 +47,16 @@ const Messenger: FC = () => {
 
         initDb();
     }, []); 
+
+    useEffect(() => {
+        console.log(messages.messages)
+    },[messages.messages])
+
+    useEffect(() => {
+        //1) взяття з бази даних(indexedDb)
+        //2) сортування по Message.userId && Message.senderId
+        //3) присовєння messages в setMessage()
+    }, [auth.selectedChat]);
 
     useEffect(() => {
         if (!dbOpened || !auth.token) return; 
@@ -116,7 +128,8 @@ const Messenger: FC = () => {
         e.preventDefault();
         const sendMessagePayload: sendMessagePayload = {
             message: message,
-            userId: auth.selectedChat?.id!
+            senderUserId: auth.user?.id!,
+            receiverUserId: auth.selectedChat?.id!
         };
         auth.connection!.invoke("SendMessage", sendMessagePayload);
     };
@@ -130,6 +143,8 @@ const Messenger: FC = () => {
         console.log(`Button clicked: ${value}`);
         setShowModal(false);
     };
+
+
 
     return (
         <div className="h-100 text-color-main-menu">
@@ -158,9 +173,9 @@ const Messenger: FC = () => {
                 <div className="col-9 chat ps-0 pe-0">
                     {!!auth.selectedChat && (
                         <>
-                            <div className="chat-header">Chat Header</div>
+                            <div className="chat-header">{auth.selectedChat.userName}</div>
                             <div className="messages ms-5 me-5 ps-5 pe-5">
-                                <RenderMessages ChatId={"1212"}></RenderMessages>
+                                <RenderMessages ChatId={"1212"} Messages={messages.messages!}></RenderMessages>
                             </div>
 
                             <form onSubmit={handleSubmitMessage}>

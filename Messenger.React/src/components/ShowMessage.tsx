@@ -17,14 +17,14 @@ const ShowMessage: FC<MessageProps> = ({ Message }) => {
             {
                 auth.user!.id != Message.sender.id ?
                     (
-                        <div className="col-12 d-flex justify-content-end">
-                            <div className="mt-2 message-box my-message">{Message.content}</div>
+                        <div className="col-12 d-flex">
+                            <div className="mt-2 message-box">{Message.content}</div>
                         </div>
                     )
                     :
                     (
-                        <div className="col-12 d-flex ">
-                            <div className="message-box mt-2">{Message.content}</div>
+                        <div className="col-12 d-flex justify-content-end ">
+                            <div className="message-box mt-2 my-message">{Message.content}</div>
                         </div>
 
                     )

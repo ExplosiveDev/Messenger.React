@@ -1,14 +1,16 @@
 import React, { useEffect } from 'react';
 import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
 import { AuthContext } from './context/AuthContext';
-import { IndexedDBProvider } from './context/IndexedDbContext'; // Вказати правильний шлях до вашого контексту
 import MyRoutes from './pages/MyRoutes';
-import { useMessage } from './hooks/message.hook';
+import { useConnection } from './hooks/connection.hook';
 import { useAuth } from './hooks/auth.hook';
+import { MessageContex } from './context/MessageContext';
+import { useMessage } from './hooks/message.hook';
 
 const App: React.FC = () => {
   const { login, logout, token, user } = useAuth();
-  const { connection, setConnection, selectedChat, setSelectedChat } = useMessage();
+  const { connection, setConnection, selectedChat, setSelectedChat } = useConnection();
+  const {messages,addNewMessage} = useMessage()
   const isAuthenticated = !!token;
 
   useEffect(() => {
@@ -20,8 +22,15 @@ const App: React.FC = () => {
             .withAutomaticReconnect()
             .build();
 
-          newConnection.on("ReceiveMessage", (message) => {
+          newConnection.on("ReceiveMessage", (message, status) => {
+            if(status == 200)
+              addNewMessage(message);
+
+          });
+
+          newConnection.on("ReceiveSystemMessage", (message) => {
             console.log(message);
+
           });
 
           await newConnection.start();
@@ -62,9 +71,13 @@ const App: React.FC = () => {
         isAuthenticated,
       }}
     >
-      {/* <IndexedDBProvider> */}
+      <MessageContex.Provider
+        value={{
+            messages: messages || null,
+            addNewMessage : addNewMessage,
+          }}>
         <MyRoutes isAuthenticated={isAuthenticated} user={user!} />
-      {/* </IndexedDBProvider> */}
+      </MessageContex.Provider>
     </AuthContext.Provider>
   );
 };
