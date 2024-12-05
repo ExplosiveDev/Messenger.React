@@ -5,7 +5,9 @@ interface Message{
     id: string,
     content: string,
     timestamp: string,
+    receiverId: string,
     sender: User;
+    receive: User;
     chats: Chat[];
 
 }
