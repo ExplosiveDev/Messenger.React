@@ -3,12 +3,12 @@ import User from "./User";
 
 interface Message{
     id: string,
-    content: string,
-    timestamp: string,
-    receiverId: string,
-    sender: User;
-    receive: User;
-    chats: Chat[];
+    content: string ,
+    timestamp:string | Date,
+    senderId: string,
+    sender: User,
+    chatId: string,
+    chat:Chat,
 
 }
 

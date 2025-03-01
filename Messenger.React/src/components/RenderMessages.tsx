@@ -3,9 +3,8 @@ import { ChangeEvent, FC, FormEvent, useContext, useEffect, useState } from "rea
 import { AuthContext } from "../context/AuthContext";
 import Message from "../Models/Message";
 import ShowMessage from "./ShowMessage";
-import { MessageContex } from "../context/MessageContext";
-import IndexedDbMessageEntity from "../Models/IndexedDbMessageEntity";
-import useIndexedDB from "../hooks/indexedDb.hook";
+import { MessengerContex } from "../context/MessegerContext";
+import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 
 interface ChatProps {
     ChatId: string;
@@ -14,36 +13,39 @@ interface ChatProps {
 const RenderMessages: FC<ChatProps> = ({ChatId}) => {
 
     const auth = useContext(AuthContext);
-    const newMessages = useContext(MessageContex);
-    const { openDb, getData, addDataEntity, addDataRange, addNewMessageIntoData, db, } = useIndexedDB("Messages")
-    const [dbOpened, setDbOpened] = useState(false);
+    const messageContext = useContext(MessengerContex);
 
+    const { openDb, getMessage, getMessagesByChatId, db, addMessage } = useIndexedDBMessenger()
     const [messages, setMessages] = useState<Message[]>([])
+    const [dbOpened, setDbOpened] = useState(false);
 
     useEffect(() => {
         const initDb = async () => {
             try {
-                await openDb();
+                await openDb(); 
                 setDbOpened(true);
             } catch (error) {
                 console.error("Error opening IndexedDB:", error);
             }
         };
-
         initDb();
-    }, []);
-    useEffect(()  => {
-        if (!dbOpened || !auth.token) return;
-        getData(ChatId!).then((object: IndexedDbMessageEntity) => {
-            if(object)
-                setMessages(object.messages);
-        });
-        console.log("22")
-    }, [newMessages.messages, dbOpened]);
-
+    }, []); 
+    
     useEffect(() => {
-        
-    }, [messages]);
+        const fetchMessages = async () => {
+            if (!dbOpened) return; 
+            try {
+                const messages: Message[] = await getMessagesByChatId(ChatId);
+                //console.log(messages);
+                setMessages(messages);
+            } catch (error) {
+                console.error("Error fetching messages:", error);
+            }
+        };
+        fetchMessages();
+    }, [dbOpened, ChatId, messageContext.messages]); 
+    
+
 
 
     return (

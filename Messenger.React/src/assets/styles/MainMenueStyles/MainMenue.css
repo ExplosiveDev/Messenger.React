@@ -80,6 +80,7 @@ body {
 .chat-name{
     color: #3a8ef6;
 }
-.chat-hover{
-    transition: all 0.5s ease;
+.chat-hover:hover{
+    transition: all .6s ease;
+    background-color: rgb(58, 57, 57);
 }

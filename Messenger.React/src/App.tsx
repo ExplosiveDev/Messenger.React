@@ -1,112 +1,81 @@
 import React, { useEffect, useState } from 'react';
-import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { AuthContext } from './context/AuthContext';
 import MyRoutes from './pages/MyRoutes';
 import { useConnection } from './hooks/connection.hook';
 import { useAuth } from './hooks/auth.hook';
-import { MessageContex } from './context/MessageContext';
+import { MessengerContex } from './context/MessegerContext';
 import { useMessage } from './hooks/message.hook';
+import { getSavedChats } from './services/chats';
+import useIndexedDBMessenger from './hooks/indexedDbMessenger.hook';
 import Message from './Models/Message';
-import useIndexedDB from './hooks/indexedDb.hook';
-import User from './Models/User';
 
 const App: React.FC = () => {
   const { login, logout, token, user } = useAuth();
   const { connection, setConnection, selectedChat, setSelectedChat } = useConnection();
   const { messages, chats, addNewMessage, addNewChat, initChats } = useMessage()
   const isAuthenticated = !!token;
+  const { openDb, addPrivateChats, addGroupChats, addMessage } = useIndexedDBMessenger()
 
-  const { openDb, getData, addDataEntity, addDataRange, getAllMessages, getAllSavedChats, addNewMessageIntoData, db, } = useIndexedDB("Messages")
-
-  const [dbOpened, setDbOpened] = useState(false); // Стан для контролю, чи відкрито базу даних
+  const [DbOpened, setDbOpened] = useState(false);
 
   useEffect(() => {
-    const initDb = async () => {
+    const initChatsDb = async () => {
       try {
         await openDb();
         setDbOpened(true);
-        console.log("IndexedDB opened");
       } catch (error) {
         console.error("Error opening IndexedDB:", error);
       }
     };
-
-    initDb();
-
+    initChatsDb();
   }, []);
 
   useEffect(() => {
-    if (dbOpened) {
-      getAllSavedChats()
-        .then((chats: User[]) => {
-          if (chats)
-            initChats(chats);
-        });
-    }
-  }, [dbOpened])
+    const fetchChats = async () => {
+      if (DbOpened && token) {
+        const chats = await getSavedChats(token);
+        if (chats) {
+          addPrivateChats(chats?.privateChats);
+          addGroupChats(chats?.groupChats);
+        }
+      }
+    };
+
+    fetchChats();
+  }, [DbOpened]);
 
   useEffect(() => {
     const connectToChat = async () => {
-      if (user && dbOpened) {
+      if (user && DbOpened) {
         try {
           const newConnection = new HubConnectionBuilder()
-            .withUrl("https://localhost:7250/chat")
+            .withUrl("http://192.168.0.100:5187/chat")
             .withAutomaticReconnect()
             .build();
 
           newConnection.on("ReceiveMessage", (message: Message, status: number) => {
             if (status == 200) {
-              console.log(message);
-              if (dbOpened) {
-                if (message.receiverId == user.id)
-                  addNewMessageIntoData(message, message.sender.id);
-                else
-                  addNewMessageIntoData(message, message.receiverId);
+              if (DbOpened) {
+                if (message) {
+                  console.log(message);
+                  addMessage(message)
+                  addNewMessage(message);
+                }
               }
-              addNewMessage(message);
-              getAllSavedChats()
-                .then((chats: User[]) => {      
-                  if(chats.length == 0){
-                    if (dbOpened) {
-                      getAllSavedChats()
-                        .then((chats: User[]) => {
-                          if (chats)
-                            initChats(chats);
-                            console.log(chats);
-                        });
-                    }
-                  }
-                  chats.forEach(element => {
-                    if ((element.id != message.receiverId && message.receiverId != user.id) || (element.id != message.sender.id && message.sender.id != user.id)){
-                      console.log(chats);
-                      if (dbOpened) {
-                        getAllSavedChats()
-                          .then((chats: User[]) => {
-                            if (chats)
-                              initChats(chats);
-                              console.log(chats);
-                          });
-                      }
-                    }
-                  });
-
-
-                });
 
             }
           });
 
-          newConnection.on("ReceiveSystemMessage", (message) => {
-            // console.log(message);
+          // newConnection.on("ReceiveSystemMessage", (message) => {
+          //   // console.log(message);
 
-          });
-
+          // });
           await newConnection.start();
           await newConnection.invoke("JoinChat", {
             User: user,
-            chatRoom: "FirstChat"
+            chatRoom: "Chats"
           });
-
           setConnection(newConnection);
         } catch (error) {
           console.error(error);
@@ -124,7 +93,7 @@ const App: React.FC = () => {
         setConnection(null);
       }
     };
-  }, [isAuthenticated, user, dbOpened]);
+  }, [isAuthenticated, user, DbOpened]);
 
   return (
     <AuthContext.Provider
@@ -139,15 +108,16 @@ const App: React.FC = () => {
         isAuthenticated,
       }}
     >
-      <MessageContex.Provider
+      <MessengerContex.Provider
         value={{
+          DbOpened: DbOpened || null,
           messages: messages || null,
           chats: chats || null,
           addNewMessage: addNewMessage,
           addNewChat: addNewChat
         }}>
         <MyRoutes isAuthenticated={isAuthenticated} user={user!} />
-      </MessageContex.Provider>
+      </MessengerContex.Provider>
     </AuthContext.Provider >
   );
 };

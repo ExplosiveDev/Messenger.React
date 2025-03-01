@@ -1,7 +1,6 @@
 import { ChangeEvent, FC, FormEvent, MouseEvent, useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import RenderMessages from "../components/RenderMessages";
-import User from "../Models/User";
 import axios from "axios";
 import ShowChats from "../components/ShowChats";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -10,71 +9,100 @@ import { faEllipsisV, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import '../assets/styles/bootstrap.min.css';
 import '../assets/styles/style.css';
 import '../assets/styles/MainMenueStyles/MainMenue.css';
-import Message from "../Models/Message";
-import { getAllMessages } from "../services/messages";
-import useIndexedDB from "../hooks/indexedDb.hook";
-import { MessageContex } from "../context/MessageContext";
-import IndexedDbMessageEntity from "../Models/IndexedDbMessageEntity";
-import { useMessage } from "../hooks/message.hook";
+
+import { MessengerContex } from "../context/MessegerContext";
+import Chat from "../Models/Chat";
+import PrivateChat from "../Models/PrivateChat";
+import GroupChat from "../Models/GroupChat";
+import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
+import SearchChats from "../components/SearchChats";
 
 interface sendMessagePayload {
-    message: string,
-    senderUserId: string
-    receiverUserId: string
+    content: string,
+    senderId: string
+    chatId: string
+}
+
+interface searcheGlobalChats {
+    privateChats: PrivateChat[],
+    groupChats: GroupChat[]
 }
 
 const Messenger: FC = () => {
     const auth = useContext(AuthContext);
-    const newMessages = useContext(MessageContex);
+    const messenger = useContext(MessengerContex);
 
-    const [searchChat, setSearchChat] = useState("");
+    const [searchChatName, setSearchChat] = useState("");
     const [message, setMessage] = useState("");
-    const [debouncedTerm, setDebouncedTerm] = useState(searchChat);
-    const [savedChats, setSavedChats] = useState<User[]>([]); // тимчасово User[]
-    const [newChats, setNewChats] = useState<User[]>([]); // тимчасово User[]
+    const [debouncedTerm, setDebouncedTerm] = useState(searchChatName);
+    const [savedChats, setSavedChats] = useState<Chat[]>([]);
+    const [searchedChats, setSearchedChats] = useState<Chat[]>([]);
 
     const [showSavedChats, setShowSavedChats] = useState(true);
-    const [showNewChats, setShowNewChats] = useState(false);
-    // const [showModal, setShowModal] = useState(false);
+    const [showSearchedChats, setShowSearchedSavedChats] = useState(false);
+    const [isGlobalSearch, setIsGlobalSearch] = useState(false);
 
+    const { openDb, getChats, getChatsByName, isGroupChat, isPrivateChat, getMessagesByChatId } = useIndexedDBMessenger()
 
+    const [DbOpened, setDbOpened] = useState(false);
+
+    useEffect(() => {
+        const initChatsDb = async () => {
+            try {
+                await openDb();
+                setDbOpened(true);
+            } catch (error) {
+                console.error("Error opening IndexedDB:", error);
+            }
+        };
+        initChatsDb();
+    }, []);
+
+    useEffect(() => {
+        (async () => {
+            const chats = await getChats();
+            if (chats) {
+                setSavedChats(chats);
+            }
+        })();
+    }, [DbOpened])
 
     useEffect(() => {
         const handler = setTimeout(() => {
-            if (searchChat.length === 0) {
-                setShowNewChats(false);
+            if (searchChatName.length === 0) {
+                setShowSearchedSavedChats(false);
                 setShowSavedChats(true);
                 return;
             }
-            setDebouncedTerm(searchChat);
-        }, 200); // 500 мс затримка
+            setDebouncedTerm(searchChatName);
+        }, 100); // 100 мс затримка 
 
         return () => {
             clearTimeout(handler);
         };
-    }, [searchChat]);
+    }, [searchChatName]);
 
     useEffect(() => {
-        if (newMessages.chats)
-            setSavedChats(newMessages.chats);
-
-        console.log(newMessages.chats)
-    }, [newMessages.chats])
-
-    useEffect(() => {
-        const fetchData = async () => {
+        const searchChats = async () => {
             try {
-                const response = await axios.post<User[]>(
-                    `https://localhost:7250/Users/SearchUser`,
-                    searchChat,
-                    {
+                const chats: Chat[] = await getChatsByName(searchChatName);
+                if (chats.length > 0) {
+                    setSearchedChats(chats);
+                    setIsGlobalSearch(false);
+
+                }
+                else { //Глобальний пошук всіх приватних та групових чатів за назвою                    
+                    const response = await axios.get(`http://192.168.0.100:5187/Chats/GetGlobalChatsByName`, {
+                        params: { name: searchChatName },
                         headers: {
-                            'Content-Type': 'application/json'
+                            Authorization: `Bearer ${auth.token}`
                         }
-                    }
-                );
-                const data = response.data;
-                setNewChats(data);
+                    });
+                    setIsGlobalSearch(true);
+                    const data: searcheGlobalChats = response.data;
+                    const chats: Chat[] = [...data.privateChats, ...data.groupChats];
+                    setSearchedChats(chats);
+                }
             } catch (error) {
                 console.error('Search failed:', error);
             }
@@ -82,22 +110,22 @@ const Messenger: FC = () => {
 
 
         if (debouncedTerm) {
-            fetchData();
+            searchChats();
         }
     }, [debouncedTerm]);
 
     const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
         setSearchChat(e.target.value);
         if (e.target.value.length > 0) {
-            if (!showNewChats)
-                setShowNewChats(true)
+            if (!showSearchedChats)
+                setShowSearchedSavedChats(true)
             if (showSavedChats)
                 setShowSavedChats(false)
         }
 
 
     };
-    
+
 
     const handleMessageChange = (e: ChangeEvent<HTMLInputElement>) => {
         setMessage(e.target.value);
@@ -106,15 +134,15 @@ const Messenger: FC = () => {
     const handleSubmitMessage = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const sendMessagePayload: sendMessagePayload = {
-            message: message,
-            senderUserId: auth.user?.id!,
-            receiverUserId: auth.selectedChat?.id!
+            content: message,
+            senderId: auth.user?.id!,
+            chatId: auth.selectedChat?.id!
         };
         auth.connection!.invoke("SendMessage", sendMessagePayload);
     };
 
     const handleLeftSearchMode = async (e: MouseEvent<HTMLButtonElement>) => {
-        setShowNewChats(false);
+        setShowSearchedSavedChats(false);
         setSearchChat("");
         setShowSavedChats(true);
     }
@@ -122,8 +150,7 @@ const Messenger: FC = () => {
     return (
         <div className="h-100 text-color-main-menu">
             <div className="row h-100">
-                <div className="col-3 sidebar ps-0 pe-0">
-                    <div className="chat-header mb-2">Chats</div>
+                <div className="col-3 sidebar py-2 ps-0 pe-0">
                     <div className="search-bar ps-2 pe-2 d-flex">
                         {
                             showSavedChats && (
@@ -133,35 +160,54 @@ const Messenger: FC = () => {
                             )
                         }
                         {
-                            showNewChats && (
+                            showSearchedChats && (
                                 <button className="btn btn-secondary me-2  mb-2" type="button" id="left" aria-expanded="false" onClick={handleLeftSearchMode}>
                                     <FontAwesomeIcon icon={faArrowLeft} />
                                 </button>
                             )
                         }
-                        <input type="text" className="form-control mb-1 " placeholder="Search" value={searchChat} onChange={handleSearchChange} />
+                        <input type="text" className="form-control mb-1 " placeholder="Search" value={searchChatName} onChange={handleSearchChange} />
 
                     </div>
                     {
-                        <>
-                        {
-                            showSavedChats && (
-                                <ShowChats Chats={savedChats} ShowMode="savedchats" key={"savedChats"} />
-                            )
-                        }
-                        {
-                            showNewChats && (
-                                <ShowChats Chats={newChats} ShowMode="newchats" key={"newChats"} />
-                            )
-                        }
-                        </>
+                        showSavedChats && (
+                            <ShowChats
+                                Chats={savedChats}
+                                key={"savedChats"}
+                                dbOpened ={DbOpened}
+                            />
+                        )
                     }
+                    {
+                        showSearchedChats && (
+                            <SearchChats
+                                Chats={searchedChats}
+                                isGlobalSearch={isGlobalSearch}
+                                key={"searchedChats"}
+                            />
+                        )
+                    }
+
                 </div>
 
                 <div className="col-9 chat ps-0 pe-0">
                     {!!auth.selectedChat && (
                         <>
-                            <div className="chat-header">{auth.selectedChat.userName}</div>
+
+                            <div className="chat-header">
+                                {isPrivateChat(auth.selectedChat) ? (
+                                    (() => {
+                                        const user1Name = auth.selectedChat.user1?.userName || "Unknown User";
+                                        const user2Name = auth.selectedChat.user2?.userName || "Unknown User";
+                                        const chatName = user1Name === auth.user?.userName ? user2Name : user1Name;
+                                        return chatName;
+                                    })()
+                                ) : isGroupChat(auth.selectedChat) ? (
+                                    auth.selectedChat.groupName
+                                ) : (
+                                    "Unknown Chat"
+                                )}
+                            </div>
                             <div className="messages ms-5 me-5 ps-5 pe-5">
                                 <RenderMessages key={auth.selectedChat.id} ChatId={auth.selectedChat.id}></RenderMessages>
                             </div>
@@ -177,7 +223,7 @@ const Messenger: FC = () => {
                 </div>
             </div>
 
-        
+
         </div>
 
 

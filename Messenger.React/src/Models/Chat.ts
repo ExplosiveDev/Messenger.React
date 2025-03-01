@@ -1,11 +1,10 @@
 import Message from "./Message";
-import User from "./User";
+import UserChat from "./UserChat";
 
 interface Chat{
     id: string,
-    name: string,
     messages: Message[],
-    users: User[];
+    userChats: UserChat[],
 }
 
 export default Chat;

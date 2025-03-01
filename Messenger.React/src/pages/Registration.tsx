@@ -46,7 +46,7 @@ const Registration: FC = () => {
         }
 
         try {
-            const response = await axios.post('https://localhost:7250/Users/register', formData);
+            const response = await axios.post('http://192.168.0.100:5187/Users/register', formData);
             navigate("/login");
         } catch (error) {
             console.error('Registration failed:', error);

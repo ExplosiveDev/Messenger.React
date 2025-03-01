@@ -15,7 +15,7 @@ const ShowMessage: FC<MessageProps> = ({ Message }) => {
     return (
         <>
             {
-                auth.user!.id != Message.sender.id ?
+                auth.user!.id != Message.senderId ?
                     (
                         <div className="col-12 d-flex">
                             <div className="mt-2 message-box">{Message.content}</div>

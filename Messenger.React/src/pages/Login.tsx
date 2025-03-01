@@ -49,7 +49,8 @@ const Login: FC = () => {
         }
 
         try {
-            const response = await axios.post<UserLoginReques>('https://localhost:7250/Users/login', UserLogin);
+            // const response = await axios.post<UserLoginReques>('http://localhost:5187/Users/login', UserLogin);
+            const response = await axios.post<UserLoginReques>('http://192.168.0.100:5187/Users/login', UserLogin);
             const data = response.data;
             auth.login(data.token, data.user);
             setUserLogin(initState);

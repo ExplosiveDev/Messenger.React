@@ -1,21 +1,24 @@
 import { createContext } from "react";
 import Message from "../Models/Message";
 import User from "../Models/User";
+import Chat from "../Models/Chat";
 
-interface MessageContextType {
+interface MessengerContextType {
+    DbOpened: boolean | null;
     messages: Message[] | null;
-    chats: User[] | null;
+    chats: Chat[] | null;
     addNewMessage: (newMessage: Message | null) => void;
-    addNewChat: (newChat: User | null) => void
+    addNewChat: (newChat: Chat | null) => void
 }
 
 function noop() { }
 
-const defaultAuthContext: MessageContextType = {
+const defaultAuthContext: MessengerContextType = {
+    DbOpened: null,
     messages: null,
     chats : null,
     addNewMessage: noop,
     addNewChat: noop,
 };
 
-export const MessageContex = createContext(defaultAuthContext);
+export const MessengerContex = createContext(defaultAuthContext);

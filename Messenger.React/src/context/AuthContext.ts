@@ -1,15 +1,16 @@
 import { createContext } from "react";
 import User from "../Models/User";
 import { HubConnection } from "@microsoft/signalr";
+import Chat from "../Models/Chat";
 
 interface AuthContextType {
-    selectedChat: User | null;
+    selectedChat: Chat | null;
     token: string | null;
     user: User | null;
     connection: HubConnection | null;
     login: (jwtToken: string, user: User) => void;
     logout: () => void;
-    setSelectedChat: (user: User) => void;
+    setSelectedChat: (user: Chat) => void;
     isAuthenticated: boolean;  
 }
 
