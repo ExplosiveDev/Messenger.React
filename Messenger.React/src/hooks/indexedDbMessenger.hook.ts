@@ -6,6 +6,8 @@ import User from "../Models/User";
 import Chat from "../Models/Chat";
 import { AuthContext } from "../context/AuthContext";
 import { getAllMessages } from "../services/messages";
+import { faL } from "@fortawesome/free-solid-svg-icons";
+import { parse } from 'date-fns';
 
 function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1) {
   const [db, setDb] = useState<IDBDatabase | null>(null);
@@ -26,6 +28,17 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
     return (chat as GroupChat).groupName !== undefined;
   };
 
+  const isChat = (data: any): data is Chat => {
+    if (typeof data !== "object" || data === null) return false;
+    
+    return (
+        "id" in data &&
+        Array.isArray(data.messages) &&
+        Array.isArray(data.userChats) &&
+        typeof data.isMessagesUpdate === "boolean"
+    );
+};
+
 
   const openDb = (): Promise<IDBDatabase> => {
     return new Promise((resolve, reject) => {
@@ -37,7 +50,8 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
 
         Object.values(storeNames).forEach((storeName) => {
           if (!db.objectStoreNames.contains(storeName)) {
-            db.createObjectStore(storeName, { keyPath: "id" });
+            const store = db.createObjectStore(storeName, { keyPath: "id" });
+            if(storeName == storeNames.Messages)   store.createIndex('timestamp', 'timestamp', { unique: false });
             console.log(`Object store "${storeName}" created.`);
           }
         });
@@ -71,14 +85,19 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
       const getRequest = store.get((data as any).id);
 
       getRequest.onsuccess = () => {
-        if (getRequest.result) {
-          return;
+        const existing = getRequest.result;
+        // console.log(data);
+        if (existing) {
+          const updatedData = { ...existing, ...data }; //Оновлюємо існуючий запис
+          const addRequest = store.put(updatedData);
+          addRequest.onsuccess = () => resolve();
+          addRequest.onerror = () => reject(addRequest.error);
+        } else {
+          const addRequest = store.put(data);
+          addRequest.onsuccess = () => resolve();
+          addRequest.onerror = () => reject(addRequest.error);
         }
 
-        const addRequest = store.put(data);
-
-        addRequest.onsuccess = () => resolve();
-        addRequest.onerror = () => reject(addRequest.error);
       };
 
       getRequest.onerror = () => reject(getRequest.error);
@@ -133,7 +152,7 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
 
   }
 
-  const getChat = async (chatId:string): Promise<Chat | undefined> => {
+  const getChat = async (chatId: string): Promise<Chat | undefined> => {
     const chats = await getChats();
     return chats.find(chat => chat.id === chatId);
   }
@@ -157,25 +176,24 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
 
       return false;
     });
-
-
   };
 
-  const getMessagesByChatId = async (chatId: string): Promise<Message[]> => {
-    const messages:Message[] = await getItems(storeNames.Messages);
-    return messages.filter((message: Message) => {
-      if (message.chatId == chatId) return message;
-    });
-  }
+  const parseCustomDate = (timestamp: string): Date => {
+    return parse(timestamp, "yyyy:MM:dd:HH:mm:ss", new Date());
+};
 
-  const fillMessagesToChat = async (chatId: string, messages:Message[]): Promise<void> => {
 
-    const chat: Chat | undefined = await getChat(chatId);
-    if (!chat) {
-      console.error(`Chat with id ${chatId} not found.`);
-      return;
-    }
-    chat.messages = messages;
+const getMessagesByChatId = async (chatId: string): Promise<Message[]> => {
+  const allMessages: Message[] = await getItems(storeNames.Messages);
+  const messages = allMessages.filter((message: Message) => message.chatId === chatId);
+
+  messages.sort((a, b) => parseCustomDate(a.timestamp).getTime() - parseCustomDate(b.timestamp).getTime());
+
+  return messages;
+};
+
+  const ChatMessagesUpdate = async (chat:Chat): Promise<void> => {
+    chat.isMessagesUpdate = true;
     const storeName = isGroupChat(chat) ? storeNames.GroupChats : storeNames.PrivateChats;
     await addItem(storeName, chat);
   }
@@ -208,7 +226,7 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
 
     db,
 
-    getChats, getChatsByName, isPrivateChat, isGroupChat, getMessagesByChatId, fillMessagesToChat
+    getChats, getChatsByName, isPrivateChat, isGroupChat, getMessagesByChatId, ChatMessagesUpdate, getChat
 
   };
 }

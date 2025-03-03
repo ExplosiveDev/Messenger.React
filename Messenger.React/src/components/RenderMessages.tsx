@@ -1,61 +1,71 @@
-import { ChangeEvent, FC, FormEvent, useContext, useEffect, useState } from "react";
-
+import { ChangeEvent, FC, FormEvent, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import Message from "../Models/Message";
 import ShowMessage from "./ShowMessage";
-import { MessengerContex } from "../context/MessegerContext";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
+import Chat from "../Models/Chat";
+import { getMessagesByChatId } from "../services/messages";
+import { MessengerContex } from "../context/MessegerContext";
 
 interface ChatProps {
     ChatId: string;
 }
 
-const RenderMessages: FC<ChatProps> = ({ChatId}) => {
-
+const RenderMessages: FC<ChatProps> = ({ ChatId }) => {
     const auth = useContext(AuthContext);
-    const messageContext = useContext(MessengerContex);
-
-    const { openDb, getMessage, getMessagesByChatId, db, addMessage } = useIndexedDBMessenger()
-    const [messages, setMessages] = useState<Message[]>([])
+    const messenger = useContext(MessengerContex);
+    const { openDb, db, getMessagesByChatId } = useIndexedDBMessenger();
+    const [messages, setMessages] = useState<Message[]>([]);
     const [dbOpened, setDbOpened] = useState(false);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
 
     useEffect(() => {
         const initDb = async () => {
             try {
-                await openDb(); 
+                await openDb();
                 setDbOpened(true);
             } catch (error) {
                 console.error("Error opening IndexedDB:", error);
             }
         };
         initDb();
-    }, []); 
-    
+    }, [auth.selectedChat]);
+
     useEffect(() => {
         const fetchMessages = async () => {
-            if (!dbOpened) return; 
+            if (!dbOpened || !db) return;
             try {
-                const messages: Message[] = await getMessagesByChatId(ChatId);
-                //console.log(messages);
-                setMessages(messages);
+                const msgs: Message[] = await getMessagesByChatId(ChatId);
+                if (msgs) setMessages(msgs);
             } catch (error) {
                 console.error("Error fetching messages:", error);
             }
         };
         fetchMessages();
-    }, [dbOpened, ChatId, messageContext.messages]); 
-    
+    }, [dbOpened, ChatId, messenger.messages]); 
 
 
+
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]); 
 
     return (
         <div className="row">
-            {messages.map((message) => {
-                return <ShowMessage Message={message} key={message.id}/>
-            })}
+            {messages.length > 0 && (
+                messages.map((message) => {
+                    return <ShowMessage Message={message} key={message.id} />;
+                })
+            ) }
+            <div ref={messagesEndRef} />
         </div>
-    )
-}
+    );
+};
 
-export default RenderMessages
-
+export default RenderMessages;

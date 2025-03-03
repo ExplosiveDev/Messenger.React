@@ -4,7 +4,7 @@ import User from "./User";
 interface Message{
     id: string,
     content: string ,
-    timestamp:string | Date,
+    timestamp:string,
     senderId: string,
     sender: User,
     chatId: string,

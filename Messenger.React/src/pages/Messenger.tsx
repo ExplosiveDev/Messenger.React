@@ -16,6 +16,8 @@ import PrivateChat from "../Models/PrivateChat";
 import GroupChat from "../Models/GroupChat";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import SearchChats from "../components/SearchChats";
+import ChatsCortage from "../Models/ChatsCortage";
+import { getSavedChats } from "../services/chats";
 
 interface sendMessagePayload {
     content: string,
@@ -42,7 +44,7 @@ const Messenger: FC = () => {
     const [showSearchedChats, setShowSearchedSavedChats] = useState(false);
     const [isGlobalSearch, setIsGlobalSearch] = useState(false);
 
-    const { openDb, getChats, getChatsByName, isGroupChat, isPrivateChat, getMessagesByChatId } = useIndexedDBMessenger()
+    const { openDb, getChats, getChatsByName, isGroupChat, isPrivateChat, getMessagesByChatId, addPrivateChats, addGroupChats } = useIndexedDBMessenger()
 
     const [DbOpened, setDbOpened] = useState(false);
 
@@ -50,6 +52,7 @@ const Messenger: FC = () => {
         const initChatsDb = async () => {
             try {
                 await openDb();
+                console.log("Messenger:openDb")
                 setDbOpened(true);
             } catch (error) {
                 console.error("Error opening IndexedDB:", error);
@@ -59,12 +62,15 @@ const Messenger: FC = () => {
     }, []);
 
     useEffect(() => {
-        (async () => {
-            const chats = await getChats();
-            if (chats) {
-                setSavedChats(chats);
-            }
-        })();
+        if(!DbOpened) return;
+
+            getSavedChats(auth.token!).then((chats:ChatsCortage | null) => {
+                if (chats) {
+                    addPrivateChats(chats.privateChats);
+                    addGroupChats(chats.groupChats);
+                    getChats().then(setSavedChats);
+                }
+            });
     }, [DbOpened])
 
     useEffect(() => {
@@ -174,7 +180,6 @@ const Messenger: FC = () => {
                             <ShowChats
                                 Chats={savedChats}
                                 key={"savedChats"}
-                                dbOpened ={DbOpened}
                             />
                         )
                     }

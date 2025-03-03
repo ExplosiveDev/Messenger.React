@@ -15,6 +15,8 @@ export const getSavedChats = async (token:string): Promise<ChatsCortage | null> 
         });
 
         const data = response.data;
+        data.groupChats.forEach((chat) => {chat.isMessagesUpdate = false});
+        data.privateChats.forEach((chat) => {chat.isMessagesUpdate = false});
         return data;
     } catch (error) {
         console.error('Search failed:', error);

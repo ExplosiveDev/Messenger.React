@@ -1,6 +1,5 @@
 import React, { FC, MouseEvent, useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
-import '../assets/styles/modalWindow/Modal.css'
 import ShowChat from "./ShowChat";
 import PrivateChat from "../Models/PrivateChat";
 import GroupChat from "../Models/GroupChat";
@@ -8,10 +7,10 @@ import Chat from "../Models/Chat";
 
 interface ChatsProps {
   Chats: Chat[];
-  dbOpened:boolean;
+  
 }
 
-const ShowChats: FC<ChatsProps> = ({ Chats, dbOpened }) => {
+const ShowChats: FC<ChatsProps> = ({ Chats }) => {
   const auth = useContext(AuthContext);
 
   const isPrivateChat = (chat: Chat): chat is PrivateChat => {
@@ -30,9 +29,9 @@ const ShowChats: FC<ChatsProps> = ({ Chats, dbOpened }) => {
             const user1Name = chat.user1?.userName || "Unknown User";
             const user2Name = chat.user2?.userName || "Unknown User";
             const chatName = user1Name === auth.user?.userName ? user2Name : user1Name;
-            return <ShowChat Chat={chat} ChatName={chatName} key={chat.id} dbOpened={dbOpened} />;
+            return <ShowChat Chat={chat} ChatName={chatName} key={chat.id} />;
           } else if (isGroupChat(chat)) {
-            return <ShowChat Chat={chat} ChatName={chat.groupName}  key={chat.id} dbOpened={dbOpened}/>;
+            return <ShowChat Chat={chat} ChatName={chat.groupName} key={chat.id} />;
           } else {
             return null;
           }

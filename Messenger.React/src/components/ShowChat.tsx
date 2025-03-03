@@ -1,4 +1,4 @@
-import { FC, MouseEvent, useContext, useEffect, useState } from "react";
+import { FC, MouseEvent, useContext, useEffect, useRef, useState } from "react";
 import User from "../Models/User";
 import { AuthContext } from "../context/AuthContext";
 import Chat from "../Models/Chat";
@@ -8,34 +8,58 @@ import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 
 interface ChatProps {
     Chat: Chat;
-    ChatName:string;
-    dbOpened:boolean;
+    ChatName:string
 }
 
-const ShowChat: FC<ChatProps> = ({ Chat, ChatName, dbOpened }) => {
+const ShowChat: FC<ChatProps> = ({ Chat, ChatName }) => {
     const auth = useContext(AuthContext);
-    const { getMessage, db, addMessage, fillMessagesToChat } = useIndexedDBMessenger()
+    const { openDb, db, ChatMessagesUpdate, addMessages } = useIndexedDBMessenger()
+    const [dbOpened, setDbOpened] = useState(false);
+    const [Messages, setMessages] = useState<Message[]>([]);
+
 
     const selectChat = async (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault()
-        auth.setSelectedChat(Chat);
-    };
-    
-
-
-    useEffect(() => {
         const fetchMessages = async () => {
-            if (!dbOpened || !auth.selectedChat) return;
             try {
-                const messages: Message[] = await getMessagesByChatId(auth.token!, auth.selectedChat.id);
-                console.log(messages)
-                fillMessagesToChat(auth.selectedChat.id, messages);
+                const messages: Message[] = await getMessagesByChatId(auth.token!, Chat.id);
+                // console.log(messages);
+                setMessages(messages);
             } catch (error) {
                 console.error("Error fetching messages:", error);
             }
         };
-        fetchMessages();
-    }, [dbOpened, auth.selectedChat]);  
+
+        const initDb = async () => {
+            try {
+                await openDb(); 
+                setDbOpened(true);
+            } catch (error) {
+                console.error("Error opening IndexedDB:", error);
+            }
+        }; 
+        // console.log(Chat.isMessagesUpdate);
+        if(!Chat.isMessagesUpdate){ //Повідомлення не взяті з БД
+            fetchMessages();
+            initDb();
+        }
+        else{ //Повідомлення взяті з БД 
+            auth.setSelectedChat(Chat);
+        }
+    };
+    
+    useEffect(() => {
+        if(dbOpened){
+            Chat.isMessagesUpdate = true;
+            addMessages(Messages).then(() => {     
+                ChatMessagesUpdate(Chat)        
+                auth.setSelectedChat(Chat);
+            })
+        }
+
+    }, [Messages]); 
+
+
 
     return (
         <div className="col-12 my-1 ">

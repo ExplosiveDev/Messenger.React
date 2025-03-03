@@ -12,10 +12,12 @@ import Message from './Models/Message';
 
 const App: React.FC = () => {
   const { login, logout, token, user } = useAuth();
+  const { messages, chats, addNewMessage, addNewChat, initChats } = useMessage();
+
   const { connection, setConnection, selectedChat, setSelectedChat } = useConnection();
-  const { messages, chats, addNewMessage, addNewChat, initChats } = useMessage()
+  const { openDb, addPrivateChats, addGroupChats, addMessage } = useIndexedDBMessenger();
+
   const isAuthenticated = !!token;
-  const { openDb, addPrivateChats, addGroupChats, addMessage } = useIndexedDBMessenger()
 
   const [DbOpened, setDbOpened] = useState(false);
 
@@ -31,19 +33,6 @@ const App: React.FC = () => {
     initChatsDb();
   }, []);
 
-  useEffect(() => {
-    const fetchChats = async () => {
-      if (DbOpened && token) {
-        const chats = await getSavedChats(token);
-        if (chats) {
-          addPrivateChats(chats?.privateChats);
-          addGroupChats(chats?.groupChats);
-        }
-      }
-    };
-
-    fetchChats();
-  }, [DbOpened]);
 
   useEffect(() => {
     const connectToChat = async () => {
@@ -58,9 +47,10 @@ const App: React.FC = () => {
             if (status == 200) {
               if (DbOpened) {
                 if (message) {
-                  console.log(message);
-                  addMessage(message)
-                  addNewMessage(message);
+                  addMessage(message).then(() => { //Оптимізувати отримання повідомлення*
+                    addNewMessage(message);
+                  });
+
                 }
               }
 
@@ -110,7 +100,6 @@ const App: React.FC = () => {
     >
       <MessengerContex.Provider
         value={{
-          DbOpened: DbOpened || null,
           messages: messages || null,
           chats: chats || null,
           addNewMessage: addNewMessage,
