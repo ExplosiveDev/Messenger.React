@@ -7,7 +7,6 @@ import Chat from "../Models/Chat";
 
 interface ChatsProps {
   Chats: Chat[];
-  
 }
 
 const ShowChats: FC<ChatsProps> = ({ Chats }) => {

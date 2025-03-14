@@ -14,7 +14,6 @@ const ShowMessage: FC<MessageProps> = ({ Message }) => {
     const formattedDate = isNaN(date.getTime()) 
     ? 'Invalid Date' 
     : format(date, 'HH:mm');
-    console.log("Message timestamp:", Message.timestamp);
     return (
         <div className={`col-12 d-flex ${isMyMessage ? 'justify-content-end' : 'justify-content-start'}`}>
             <div className={`message-box mt-2 ${isMyMessage ? 'my-message' : 'other-message'}`}>

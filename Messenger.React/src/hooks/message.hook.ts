@@ -7,17 +7,17 @@ export const useMessage = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [chats, setChats] = useState<Chat[]>([]);
 
-    const addNewMessage = useCallback((newMessage: Message | null): void => {
+    const addNewMessage = (newMessage: Message | null): void => {
         if (newMessage != null) {
             setMessages((prevMessages) => [...prevMessages, newMessage]);
             // console.log("messages update (message.hook.ts)")
         }
-    }, [])
+    }
 
-    const addNewChat = useCallback((newChat: Chat | null): void => {
+    const addNewChat = (newChat: Chat | null): void => {
         if (newChat != null)
             chats.push(newChat)
-    }, [])
+    }
 
     const initChats = useCallback((newChats: Chat[] | null): void => {
         if (newChats != null) {
@@ -26,6 +26,15 @@ export const useMessage = () => {
         }
     }, [])
 
+    const markReadedMessages = (ids: string[] | null): void => {
+        if (!ids || ids.length === 0) return; // Перевірка на null або порожній масив
 
-    return { messages, chats, addNewMessage,addNewChat,initChats };
+        setMessages(prevMessages =>
+            prevMessages.map(msg =>
+                ids.includes(msg.id) ? { ...msg, isReaded: true } : msg
+            )
+        );
+    }
+
+    return { messages, chats, addNewMessage,addNewChat,initChats, markReadedMessages };
 }

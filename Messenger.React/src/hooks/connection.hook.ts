@@ -7,14 +7,15 @@ export const useConnection = () => {
     const [connection, _setConnection] = useState<HubConnection | null>(null);
     const [selectedChat, _setSelectedChat] = useState<Chat | null>();
 
-    const setConnection = useCallback( (newConnection: HubConnection | null) : void => {
+    const setConnection = (newConnection: HubConnection | null) : void => {
         _setConnection(newConnection);
-    },[])
-    const setSelectedChat = useCallback( (chat : Chat) => {
+    }
+    const setSelectedChat = (chat : Chat) => {
         if(chat != null){
             _setSelectedChat(chat);
+            window.sessionStorage.setItem("selectedChatId", chat.id);
         }
-    },[])
+    }
 
     return {connection,setConnection,selectedChat,setSelectedChat};
 }

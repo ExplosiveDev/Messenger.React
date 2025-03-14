@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { AuthContext } from './context/AuthContext';
 import MyRoutes from './pages/MyRoutes';
@@ -9,10 +9,13 @@ import { useMessage } from './hooks/message.hook';
 import { getSavedChats } from './services/chats';
 import useIndexedDBMessenger from './hooks/indexedDbMessenger.hook';
 import Message from './Models/Message';
+import Chat from "./Models/Chat";
+import { tr } from 'date-fns/locale';
+import messagesReadedPayload from './Models/messagesReadedPayload';
 
 const App: React.FC = () => {
-  const { login, logout, token, user } = useAuth();
-  const { messages, chats, addNewMessage, addNewChat, initChats } = useMessage();
+  const { getUserId, login, logout, token, user } = useAuth();
+  const { messages, chats, addNewMessage, addNewChat, initChats, markReadedMessages } = useMessage();
 
   const { connection, setConnection, selectedChat, setSelectedChat } = useConnection();
   const { openDb, addPrivateChats, addGroupChats, addMessage } = useIndexedDBMessenger();
@@ -20,6 +23,9 @@ const App: React.FC = () => {
   const isAuthenticated = !!token;
 
   const [DbOpened, setDbOpened] = useState(false);
+
+  const auth = useContext(AuthContext);
+
 
   useEffect(() => {
     const initChatsDb = async () => {
@@ -31,6 +37,7 @@ const App: React.FC = () => {
       }
     };
     initChatsDb();
+    setSelectedChat({} as Chat);
   }, []);
 
 
@@ -47,6 +54,22 @@ const App: React.FC = () => {
             if (status == 200) {
               if (DbOpened) {
                 if (message) {
+                  const selectedChatId = window.sessionStorage.getItem("selectedChatId");
+                  const userId = getUserId();
+                      //якщо юзер вже перегляжає чат  && якщо це той юзер якому надіслали 
+                      // - тоді ми надсилаємо до серверу що це повідомлення було прочитане 
+                  if (selectedChatId == message.chatId && userId != message.senderId) {
+                    message.isReaded = true;
+
+                    const messagesReadedPayload: messagesReadedPayload = {
+                      chatId: selectedChatId,
+                      userId: userId,
+                      messegeIds: [message.id]
+                    };
+
+                    newConnection.invoke("MessagesReaded", messagesReadedPayload);
+                  }
+
                   addMessage(message).then(() => { //Оптимізувати отримання повідомлення*
                     addNewMessage(message);
                   });
@@ -57,10 +80,12 @@ const App: React.FC = () => {
             }
           });
 
-          // newConnection.on("ReceiveSystemMessage", (message) => {
-          //   // console.log(message);
 
-          // });
+          newConnection.on("ReceiveReadedMessageIds", (ids: string[]) => {
+            console.log("ids");
+          });
+
+
           await newConnection.start();
           await newConnection.invoke("JoinChat", {
             User: user,
@@ -103,7 +128,8 @@ const App: React.FC = () => {
           messages: messages || null,
           chats: chats || null,
           addNewMessage: addNewMessage,
-          addNewChat: addNewChat
+          addNewChat: addNewChat,
+          markReadedMessages: markReadedMessages
         }}>
         <MyRoutes isAuthenticated={isAuthenticated} user={user!} />
       </MessengerContex.Provider>

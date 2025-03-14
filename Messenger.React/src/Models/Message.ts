@@ -9,6 +9,7 @@ interface Message{
     sender: User,
     chatId: string,
     chat:Chat,
+    isReaded:boolean,
 
 }
 

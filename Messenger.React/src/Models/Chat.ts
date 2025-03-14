@@ -6,6 +6,8 @@ interface Chat{
     messages: Message[],
     userChats: UserChat[],
     isMessagesUpdate: boolean,
+    topMessage:Message,
+    unReaded:number,
 }
 
 export default Chat;

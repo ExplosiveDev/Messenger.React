@@ -18,6 +18,7 @@ import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import SearchChats from "../components/SearchChats";
 import ChatsCortage from "../Models/ChatsCortage";
 import { getSavedChats } from "../services/chats";
+import Message from "../Models/Message";
 
 interface sendMessagePayload {
     content: string,
@@ -44,7 +45,7 @@ const Messenger: FC = () => {
     const [showSearchedChats, setShowSearchedSavedChats] = useState(false);
     const [isGlobalSearch, setIsGlobalSearch] = useState(false);
 
-    const { openDb, getChats, getChatsByName, isGroupChat, isPrivateChat, getMessagesByChatId, addPrivateChats, addGroupChats } = useIndexedDBMessenger()
+    const { openDb, getChats, getChatsByName, isGroupChat, isPrivateChat, getMessagesByChatId, addPrivateChats, addGroupChats, addMessage } = useIndexedDBMessenger()
 
     const [DbOpened, setDbOpened] = useState(false);
 
@@ -62,15 +63,21 @@ const Messenger: FC = () => {
     }, []);
 
     useEffect(() => {
+        
+    },[messenger])
+
+    useEffect(() => {
         if(!DbOpened) return;
 
-            getSavedChats(auth.token!).then((chats:ChatsCortage | null) => {
-                if (chats) {
-                    addPrivateChats(chats.privateChats);
-                    addGroupChats(chats.groupChats);
-                    getChats().then(setSavedChats);
-                }
-            });
+        getSavedChats(auth.token!).then((chats:ChatsCortage | null) => {
+            if (chats) {
+                addPrivateChats(chats.privateChats);
+                addGroupChats(chats.groupChats);
+                getChats().then(setSavedChats);
+            }
+        });
+
+            
     }, [DbOpened])
 
     useEffect(() => {
@@ -106,7 +113,7 @@ const Messenger: FC = () => {
                     });
                     setIsGlobalSearch(true);
                     const data: searcheGlobalChats = response.data;
-                    const chats: Chat[] = [...data.privateChats, ...data.groupChats];
+                    const chats: Chat[] = [...data.privateChats, ...data.groupChats]; 
                     setSearchedChats(chats);
                 }
             } catch (error) {

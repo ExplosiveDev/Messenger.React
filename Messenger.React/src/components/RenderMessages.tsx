@@ -6,15 +6,17 @@ import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import Chat from "../Models/Chat";
 import { getMessagesByChatId } from "../services/messages";
 import { MessengerContex } from "../context/MessegerContext";
+import messagesReadedPayload from "../Models/messagesReadedPayload";
 
 interface ChatProps {
     ChatId: string;
 }
 
+
 const RenderMessages: FC<ChatProps> = ({ ChatId }) => {
     const auth = useContext(AuthContext);
     const messenger = useContext(MessengerContex);
-    const { openDb, db, getMessagesByChatId } = useIndexedDBMessenger();
+    const { openDb, db, getMessagesByChatId,GetUnReadedMessagIds,SetReadedMessages } = useIndexedDBMessenger();
     const [messages, setMessages] = useState<Message[]>([]);
     const [dbOpened, setDbOpened] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -30,7 +32,31 @@ const RenderMessages: FC<ChatProps> = ({ ChatId }) => {
             }
         };
         initDb();
+
     }, [auth.selectedChat]);
+
+    useEffect(() => {
+        async function markMessagesAsRead() {
+            if (dbOpened ) {    
+                const unreadIds = await GetUnReadedMessagIds(auth.selectedChat!.id); 
+                
+                if (unreadIds.length > 0) {
+                    const messagesReadedPayload: messagesReadedPayload = {
+                        chatId: auth.selectedChat!.id, 
+                        userId: auth.user?.id!,
+                        messegeIds: unreadIds    
+                
+                    };
+        
+                    await auth.connection!.invoke("MessagesReaded", messagesReadedPayload);
+
+                    await SetReadedMessages(unreadIds)
+                }
+            }
+        }
+
+        markMessagesAsRead();
+    },[dbOpened, auth.selectedChat])
 
     useEffect(() => {
         const fetchMessages = async () => {
@@ -44,9 +70,6 @@ const RenderMessages: FC<ChatProps> = ({ ChatId }) => {
         };
         fetchMessages();
     }, [dbOpened, ChatId, messenger.messages]); 
-
-
-
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

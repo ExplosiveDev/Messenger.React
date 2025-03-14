@@ -8,6 +8,8 @@ import { AuthContext } from "../context/AuthContext";
 import { getAllMessages } from "../services/messages";
 import { faL } from "@fortawesome/free-solid-svg-icons";
 import { parse } from 'date-fns';
+import Messenger from "../pages/Messenger";
+import { id } from "date-fns/locale";
 
 function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1) {
   const [db, setDb] = useState<IDBDatabase | null>(null);
@@ -30,14 +32,14 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
 
   const isChat = (data: any): data is Chat => {
     if (typeof data !== "object" || data === null) return false;
-    
+
     return (
-        "id" in data &&
-        Array.isArray(data.messages) &&
-        Array.isArray(data.userChats) &&
-        typeof data.isMessagesUpdate === "boolean"
+      "id" in data &&
+      Array.isArray(data.messages) &&
+      Array.isArray(data.userChats) &&
+      typeof data.isMessagesUpdate === "boolean"
     );
-};
+  };
 
 
   const openDb = (): Promise<IDBDatabase> => {
@@ -51,7 +53,7 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
         Object.values(storeNames).forEach((storeName) => {
           if (!db.objectStoreNames.contains(storeName)) {
             const store = db.createObjectStore(storeName, { keyPath: "id" });
-            if(storeName == storeNames.Messages)   store.createIndex('timestamp', 'timestamp', { unique: false });
+            if (storeName == storeNames.Messages) store.createIndex('timestamp', 'timestamp', { unique: false });
             console.log(`Object store "${storeName}" created.`);
           }
         });
@@ -78,6 +80,9 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
         reject("Database is not initialized");
         return;
       }
+
+      if (storeName == storeNames.Messages)
+        SetLastMessageToChat(data.chatId, data.content);
 
       const transaction = db.transaction(storeName, "readwrite");
       const store = transaction.objectStore(storeName);
@@ -180,23 +185,58 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
 
   const parseCustomDate = (timestamp: string): Date => {
     return parse(timestamp, "yyyy:MM:dd:HH:mm:ss", new Date());
-};
+  };
 
 
-const getMessagesByChatId = async (chatId: string): Promise<Message[]> => {
-  const allMessages: Message[] = await getItems(storeNames.Messages);
-  const messages = allMessages.filter((message: Message) => message.chatId === chatId);
+  const getMessagesByChatId = async (chatId: string): Promise<Message[]> => {
+    const allMessages: Message[] = await getItems(storeNames.Messages);
+    const messages = allMessages.filter((message: Message) => message.chatId === chatId);
 
-  messages.sort((a, b) => parseCustomDate(a.timestamp).getTime() - parseCustomDate(b.timestamp).getTime());
+    messages.sort((a, b) => parseCustomDate(a.timestamp).getTime() - parseCustomDate(b.timestamp).getTime());
 
-  return messages;
-};
+    return messages;
+  };
 
-  const ChatMessagesUpdate = async (chat:Chat): Promise<void> => {
+  const ChatMessagesUpdate = async (chat: Chat): Promise<void> => {
     chat.isMessagesUpdate = true;
     const storeName = isGroupChat(chat) ? storeNames.GroupChats : storeNames.PrivateChats;
     await addItem(storeName, chat);
   }
+
+  const GetCountOfUnReadedMessages = async (chatId: string): Promise<number> => {
+    const allMessages: Message[] = await getItems(storeNames.Messages);
+    const messages = allMessages.filter((message: Message) => message.chatId === chatId);
+    let unReaded: number = 0;
+    messages.forEach((msg) => { if (!msg.isReaded && msg.senderId != auth.user?.id) unReaded++; })
+    return unReaded;
+  }
+
+  const GetUnReadedMessagIds = async (chatId: string): Promise<string[]> => {
+    const allMessages: Message[] = await getItems(storeNames.Messages);
+    return allMessages
+      .filter(msg => msg.chatId === chatId && !msg.isReaded && msg.senderId !== auth.user?.id)
+      .map(msg => msg.id);
+  }
+
+  const SetReadedMessages = async (ids: string[]): Promise<void> => {
+    const allMessages: Message[] = await getItems(storeNames.Messages);
+    const messages = allMessages.filter((message) => ids.includes(message.id));
+
+    messages.forEach(msg => msg.isReaded = true);
+    console.log(messages);
+    addItems(storeNames.Messages, messages);
+
+  }
+
+  const SetLastMessageToChat = async (chatId: string, message: Message): Promise<void> => {
+    const chat = await getChat(chatId);
+    if (chat) {
+      chat.topMessage = message;
+      const storeName = isGroupChat(chat) ? storeNames.GroupChats : storeNames.PrivateChats;
+      await addItem(storeName, chat);
+    }
+  }
+
 
   return {
     openDb,
@@ -226,7 +266,8 @@ const getMessagesByChatId = async (chatId: string): Promise<Message[]> => {
 
     db,
 
-    getChats, getChatsByName, isPrivateChat, isGroupChat, getMessagesByChatId, ChatMessagesUpdate, getChat
+    getChats, getChatsByName, isPrivateChat, isGroupChat, getMessagesByChatId, ChatMessagesUpdate, getChat,
+    GetCountOfUnReadedMessages, GetUnReadedMessagIds, SetReadedMessages
 
   };
 }

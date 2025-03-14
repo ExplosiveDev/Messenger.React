@@ -34,6 +34,11 @@ export const useAuth = () => {
         localStorage.removeItem(UserStorage);
     }, [])
 
+    const getUserId = ():string => {
+        const data:User = getDecryptedObject(UserStorage,secretKey).user;
+        return data.id;
+    }
+
     useEffect(() => {
         const data = getDecryptedObject(UserStorage,secretKey)
  
@@ -43,5 +48,7 @@ export const useAuth = () => {
     }, [login])
 
 
-    return {login, logout, token, user};
+
+
+    return {getUserId, login, logout, token, user};
 }
