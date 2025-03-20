@@ -1,0 +1,143 @@
+
+body {
+    font-family: Arial, sans-serif;
+}
+
+.chat-header, .chat-footer {
+    background-color: #333;
+    padding: 10px;
+    text-align: center;
+}
+
+.sidebar {
+    overflow: visible !important; /* Дозволяє меню виходити за межі */
+    position: relative; /* Забезпечує коректне позиціонування */
+    background-color: #1f1f1f;
+    border-right: 1px solid #333;
+    height: 100vh;
+}
+
+.chat {
+    background-color: #2a2a2a;
+    background-image: url('../../img/pattern.png');
+    background-size: cover;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.message {
+    padding: 10px;
+    background-color: #444;
+    border-radius: 5px;
+}
+
+.message.you {
+    align-self: flex-end;
+    background-color: #3a8ef6;
+}
+
+.input-container {
+    display: flex;
+}
+
+.input-container input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.input-container button {
+    border: none;
+    border-radius: 5px;
+    background-color: #3a8ef6;
+    color: #fff;
+    cursor: pointer;
+}
+
+.text-color-main-menu{
+    color: white;
+}
+
+.message-box {
+    display: inline-block;
+    padding: 10px 20px; 
+    border: 1px solid gray; 
+    border-radius: 20px; 
+    background-color: gray;
+    max-width: 80%; 
+    word-wrap: break-word; 
+}
+.my-message {
+    background-color: #9370DB; 
+    color: white;
+    border: 0px;
+    border-radius: 18px 18px 18px 5px; 
+    padding: 10px 15px;
+    max-width: 60%;
+    word-wrap: break-word;
+    position: relative;
+}
+
+.other-message {
+    background-color: #555; 
+    color: white;
+    border: 0px;
+    border-radius:  18px 18px 5px 18px; 
+    padding: 10px 15px;
+    max-width: 60%;
+    word-wrap: break-word;
+    position: relative;
+}
+
+.chat-name{
+    color: #3a8ef6;
+}
+.chat-hover:hover{
+    transition: all .6s ease;
+    background-color: rgb(58, 57, 57);
+}
+
+.message-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-size: 0.8rem;
+    margin-top: 5px;
+}
+
+.message-date {
+    color: rgba(255, 255, 255, 0.8);
+    margin-right: 5px;
+}
+
+.message-check {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+}
+
+/* ==== Темний скролбар ==== */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1f1f1f; /* Темний фон */
+}
+
+::-webkit-scrollbar-thumb {
+    background: #555; /* Сірий колір повзунка */
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #888; /* Світліший при наведенні */
+}

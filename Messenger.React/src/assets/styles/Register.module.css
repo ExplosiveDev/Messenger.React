@@ -1,0 +1,109 @@
+.registerSection {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: #fff;
+    padding: 2rem;
+    animation: fadeIn 1s ease-in-out;
+}
+
+.registerContainer {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    max-width: 400px;
+    width: 100%;
+    animation: slideUp 0.5s ease-in-out;
+}
+
+.registerTitle {
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.registerSubtitle {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #ccc;
+}
+
+.formControl {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    width: 100%;
+    margin-bottom: 1rem;
+    padding: 12px;
+    border-radius: 6px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.formControl::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.formControl:focus {
+    border-color: #4facfe;
+    box-shadow: 0 0 12px rgba(79, 172, 254, 0.6);
+    outline: none;
+}
+
+.btnRegister {
+    background-color: #6c757d;
+    border: none;
+    width: 100% !important;
+    padding: 15px;
+    font-size: 1rem;
+    color: #e2d8d8;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    border-radius: 5px;
+}
+
+.btnRegister:hover {
+    background-color: #3d4246;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btnRegister:active {
+    background-color: #545b62;
+    transform: translateY(0);
+}
+
+.textDanger {
+    color: #ff4d4d;
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+}
