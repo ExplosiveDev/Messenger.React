@@ -18,12 +18,19 @@ import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import SearchChats from "../components/SearchChats";
 import ChatsCortage from "../Models/ChatsCortage";
 import { getSavedChats } from "../services/chats";
-import Message from "../Models/Message";
 import ChatMenu from "../components/ChatMenue";
+import FilePicker from "../components/FilePicker";
+import myFile from "../Models/File";
 
-interface sendMessagePayload {
+interface sendTextMessagePayload {
     content: string,
-    photoId:string,
+    senderId: string
+    chatId: string
+}
+
+interface sendMediaMessagePayload {
+    caption: string,
+    fileId:string,
     senderId: string
     chatId: string
 }
@@ -47,7 +54,6 @@ const Messenger: FC = () => {
     const [showSavedChats, setShowSavedChats] = useState(true);
     const [showSearchedChats, setShowSearchedSavedChats] = useState(false);
     const [isGlobalSearch, setIsGlobalSearch] = useState(false);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const { openDb, getChats, getChatsByName, isGroupChat, isPrivateChat, getChat, addPrivateChats, addPrivateChat, addGroupChats } = useIndexedDBMessenger()
 
@@ -103,6 +109,7 @@ const Messenger: FC = () => {
             try {
                 const chats: Chat[] = await getChatsByName(searchChatName);
                 if (chats.length > 0) {
+                    console.log(chats);
                     setSearchedChats(chats);
                     setIsGlobalSearch(false);
                 }
@@ -146,41 +153,14 @@ const Messenger: FC = () => {
         setMessage(e.target.value);
     };
 
-    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            setFile(e.target.files[0]);
-            console.log(e.target.files[0]);
-        }
-
-    };
-
     const handleSubmitMessage = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const sendMessagePayload: sendMessagePayload = {
+        if(message == "") return;
+        const sendTextMessagePayload: sendTextMessagePayload = {
             content: message,
-            photoId:"",
             senderId: auth.user?.id!,
             chatId: auth.selectedChat!.id,
         };
-
-        // if (file) {
-        //     const formData = new FormData();
-        //     formData.append("file", file);
-    
-        //     const response = await axios.post(
-        //         `http://192.168.0.100:5187/Files/Upload`,
-        //         formData,
-        //         {
-        //             headers: {
-        //                 "Content-Type": "multipart/form-data",
-        //                 Authorization: `Bearer ${auth.token}`,
-        //             },
-        //         }
-        //     );
-        //     const data = response.data;
-        //     sendMessagePayload.photoId = data.fileId;
-        //     console.log(data);
-        // }
 
         //Якщо чата не існує, створюєм новий чат з відповідним користувачем
         if (await getChat(auth.selectedChat!.id) == null) {
@@ -200,12 +180,12 @@ const Messenger: FC = () => {
             await addPrivateChat(newChat).then(() => {
                 messenger.addNewChat(newChat);
                 auth.setSelectedChat(newChat);
-                sendMessagePayload.chatId = newChat.id;
+                sendTextMessagePayload.chatId = newChat.id;
             });
         }
 
 
-        auth.connection!.invoke("SendMessage", sendMessagePayload);
+        auth.connection!.invoke("SendTextMessage", sendTextMessagePayload);
     };
 
     const handleLeftSearchMode = async (e: MouseEvent<HTMLButtonElement>) => {
@@ -221,11 +201,44 @@ const Messenger: FC = () => {
         }
         setShowSearchedSavedChats(false);
         setShowSavedChats(true);
-
-
-
     }
 
+    const handleFileSelect = (file: File) => {
+        console.log('File selected:', file);
+        setFile(file);
+    };
+
+    const handlePhotoSelect = (photo: File, caption?: string) => {
+        console.log('Photo selected:', photo, "Caption : ", caption);
+        const uploadFile = async () => {
+            if (photo) {
+                const formData = new FormData();
+                formData.append("file", photo);
+
+                const response = await axios.post(
+                    `http://192.168.0.100:5187/Files/Upload`,
+                    formData,
+                    {
+                        headers: {
+                            "Content-Type": "multipart/form-data",
+                            Authorization: `Bearer ${auth.token}`,
+                        },
+                    }
+                );
+                const filedId:string = response.data.id;
+                console.log(filedId)
+                const sendMediaMessagePayload:sendMediaMessagePayload = {
+                    caption:caption ? caption : "",
+                    fileId: filedId,
+                    senderId: auth.user?.id!,
+                    chatId: auth.selectedChat?.id!
+                }
+                console.log(sendMediaMessagePayload);
+                auth.connection!.invoke("SendMediaMessage", sendMediaMessagePayload);
+            }
+        }
+        uploadFile()
+    };
 
     return (
         <div className="h-100 text-color-main-menu">
@@ -290,18 +303,11 @@ const Messenger: FC = () => {
                             </div>
 
                             <form onSubmit={handleSubmitMessage} className="d-flex align-items-center gap-2 mb-3 mx-5 px-5">
-                                {/* Кнопка вибору файлу */}
-                                <div className="position-relative">
-                                    <input
-                                        type="file"
-                                        id="fileInput"
-                                        className="d-none"
-                                        onChange={handleFileChange}
-                                    />
-                                    <label htmlFor="fileInput" className="btn p-2">
-                                        <FontAwesomeIcon icon={faPaperclip} className="text-secondary" size="lg" />
-                                    </label>
-                                </div>
+                                {/* Кнопка вибору файлу з dropup меню */}
+                                <FilePicker
+                                    onFileSelect={handleFileSelect}
+                                    onPhotoSelect={handlePhotoSelect}
+                                />
 
                                 {/* Поле вводу повідомлення */}
                                 <input

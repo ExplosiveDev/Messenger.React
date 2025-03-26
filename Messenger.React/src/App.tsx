@@ -6,19 +6,16 @@ import { useConnection } from './hooks/connection.hook';
 import { useAuth } from './hooks/auth.hook';
 import { MessengerContex } from './context/MessegerContext';
 import { useMessage } from './hooks/message.hook';
-import { getSavedChats } from './services/chats';
 import useIndexedDBMessenger from './hooks/indexedDbMessenger.hook';
-import Message from './Models/Message';
-import Chat from "./Models/Chat";
-import { tr } from 'date-fns/locale';
 import messagesReadedPayload from './Models/messagesReadedPayload';
+import TextMessage from './Models/TextMessage';
 
 const App: React.FC = () => {
   const { getUserId, login, logout, token, user } = useAuth();
   const { message, chats, addNewMessage, addNewChat, initChats } = useMessage();
 
   const { connection, setConnection, selectedChat, setSelectedChat } = useConnection();
-  const { openDb, addPrivateChats, addGroupChats, addMessage } = useIndexedDBMessenger();
+  const { openDb, addMessage } = useIndexedDBMessenger();
 
   const isAuthenticated = !!token;
 
@@ -50,7 +47,7 @@ const App: React.FC = () => {
             .withAutomaticReconnect()
             .build();
 
-          newConnection.on("ReceiveMessage", (message: Message, status: number) => {
+          newConnection.on("ReceiveMessage", (message: TextMessage, status: number) => {
             if (status == 200) {
               if (DbOpened) {
                 if (message) {
@@ -70,7 +67,7 @@ const App: React.FC = () => {
                     newConnection.invoke("MessagesReaded", messagesReadedPayload);
                   }
 
-                  addMessage(message).then(() => {                    
+                  addMessage(message).then(() => {              
                     addNewMessage(message);
                   });
 

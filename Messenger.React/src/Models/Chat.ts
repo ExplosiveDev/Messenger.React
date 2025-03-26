@@ -1,4 +1,6 @@
+import MediaMessage from "./MediaMessage";
 import Message from "./Message";
+import TextMessage from "./TextMessage";
 import UserChat from "./UserChat";
 
 interface Chat{
@@ -6,7 +8,7 @@ interface Chat{
     messages: Message[],
     userChats: UserChat[],
     isMessagesUpdate: boolean,
-    topMessage:Message,
+    topMessage:TextMessage | MediaMessage,
     unReaded:number,
 }
 

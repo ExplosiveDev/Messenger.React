@@ -1,10 +1,8 @@
-import { ChangeEvent, FC, FormEvent, useContext, useEffect, useState, useCallback, useRef } from "react";
+import { FC, useContext, useEffect, useState, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import Message from "../Models/Message";
 import ShowMessage from "./ShowMessage";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
-import Chat from "../Models/Chat";
-import { getMessagesByChatId } from "../services/messages";
 import { MessengerContex } from "../context/MessegerContext";
 import messagesReadedPayload from "../Models/messagesReadedPayload";
 

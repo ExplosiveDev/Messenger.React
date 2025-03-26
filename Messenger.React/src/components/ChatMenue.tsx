@@ -76,7 +76,7 @@ const ChatMenu: FC = () => {
             {isMenuOpen && (
                 <div 
                     ref={menuRef}
-                    className="bg-dark border rounded p-2 shadow"
+                    className="bg-dark border rounded p-1"
                     style={{
                         position: "absolute",
                         minWidth: "150px",

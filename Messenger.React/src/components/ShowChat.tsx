@@ -1,11 +1,12 @@
-import { FC, MouseEvent, useContext, useEffect, useRef, useState } from "react";
-import User from "../Models/User";
+import { FC, MouseEvent, useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import Chat from "../Models/Chat";
 import Message from "../Models/Message";
 import { getMessagesByChatId } from "../services/messages";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import { MessengerContex } from "../context/MessegerContext";
+import TextMessage from "../Models/TextMessage";
+import MediaMessage from "../Models/MediaMessage";
 
 interface ChatProps {
     Chat: Chat;
@@ -15,7 +16,7 @@ interface ChatProps {
 const ShowChat: FC<ChatProps> = ({ Chat, ChatName }) => {
     const auth = useContext(AuthContext);
     const messenger = useContext(MessengerContex);
-    const { openDb, db, ChatMessagesUpdate, addMessages, GetCountOfUnReadedMessages, getChat } = useIndexedDBMessenger()
+    const { openDb, ChatMessagesUpdate, addMessages, GetCountOfUnReadedMessages, getChat,isTextMessage, isMediaMessage } = useIndexedDBMessenger()
     const [dbOpened, setDbOpened] = useState(false);
     const [Messages, setMessages] = useState<Message[]>([]);
     const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -43,8 +44,8 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName }) => {
                 return;
             } 
             try {
-                const messages: Message[] = await getMessagesByChatId(auth.token!, Chat.id);
-                setMessages(messages);
+                const messages = await getMessagesByChatId(auth.token!, Chat.id);
+                setMessages([...messages.textMessages, ...messages.mediaMessages as MediaMessage[]]);
             } catch (error) {
                 console.error("Error fetching messages:", error);
             }
@@ -67,7 +68,6 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName }) => {
             addMessages(Messages).then(() => {     
                 ChatMessagesUpdate(Chat);    
                 auth.setSelectedChat(Chat);
-                console.log(Chat);
             })
         }
     }, [Messages]); 
@@ -83,7 +83,7 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName }) => {
         if(Chat.id == messenger.message?.chatId){
             const getTopMessage = async () => {
                 getChat(Chat.id).then((chat) => {
-                    setChatTopMessage(chat?.topMessage!);
+                    setChatTopMessage(isTextMessage(chat?.topMessage!) ? chat?.topMessage as TextMessage : chat?.topMessage as MediaMessage);
                 });
 
             }
@@ -108,7 +108,16 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName }) => {
                 <h3 className="chat-name m-0 text-start text-light ">{ChatName}</h3>
             </div>
             <div className="col-12">
-                <h4 className="chat-name m-0 text-start text-secondary">{chatTopMessage ? chatTopMessage.content : ""}</h4>
+                {chatTopMessage ? isTextMessage(chatTopMessage) && (
+                    <h4 className="chat-name m-0 text-start text-secondary">{chatTopMessage.content}</h4>
+                ) : null}
+
+                {chatTopMessage ? isMediaMessage(chatTopMessage) && (
+                    <div className="d-flex flex-row">
+                        <img className="top-message-img me-1" src={chatTopMessage.content[0].url}></img>
+                        <h4 className="chat-name m-0 text-start text-secondary">{chatTopMessage.caption != "" ? chatTopMessage.caption : chatTopMessage.content[0].fileName }</h4>
+                    </div>
+                ) : null}
             </div>
 
         </div>

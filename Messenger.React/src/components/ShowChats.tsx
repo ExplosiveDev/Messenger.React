@@ -1,10 +1,9 @@
-import React, { FC, MouseEvent, useContext, useEffect, useState } from "react";
+import { FC, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import ShowChat from "./ShowChat";
 import PrivateChat from "../Models/PrivateChat";
 import GroupChat from "../Models/GroupChat";
 import Chat from "../Models/Chat";
-import { MessengerContex } from "../context/MessegerContext";
 
 interface ChatsProps {
   Chats: Chat[];
