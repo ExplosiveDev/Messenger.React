@@ -1,5 +1,5 @@
 // components/AttachmentDropup.tsx
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, FC } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperclip, faTimes } from '@fortawesome/free-solid-svg-icons';
 
@@ -10,7 +10,7 @@ interface FilePickerDropupProps {
   onPhotoSelect?: (photo: File, caption?: string) => void;
 }
 
-const FilePicker = ({ onFileSelect, onPhotoSelect }: FilePickerDropupProps) => {
+const FilePicker:FC<FilePickerDropupProps> = ({ onFileSelect, onPhotoSelect }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -102,7 +102,6 @@ const FilePicker = ({ onFileSelect, onPhotoSelect }: FilePickerDropupProps) => {
         </div>
       </div>
 
-      {/* Власне модальне вікно */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content dark-modal" ref={modalRef}>

@@ -8,20 +8,20 @@ import { MessengerContex } from './context/MessegerContext';
 import { useMessage } from './hooks/message.hook';
 import useIndexedDBMessenger from './hooks/indexedDbMessenger.hook';
 import messagesReadedPayload from './Models/messagesReadedPayload';
-import TextMessage from './Models/TextMessage';
+import Message from './Models/Message';
+import Chat from './Models/Chat';
+
 
 const App: React.FC = () => {
-  const { getUserId, login, logout, token, user } = useAuth();
+  const { getUserId, getToken, login, logout, token, user, ChangeAvatar } = useAuth();
   const { message, chats, addNewMessage, addNewChat, initChats } = useMessage();
 
   const { connection, setConnection, selectedChat, setSelectedChat } = useConnection();
-  const { openDb, addMessage } = useIndexedDBMessenger();
+  const { openDb, addMessage, getChat, addChat } = useIndexedDBMessenger();
 
   const isAuthenticated = !!token;
 
   const [DbOpened, setDbOpened] = useState(false);
-
-  const auth = useContext(AuthContext);
 
 
   useEffect(() => {
@@ -34,7 +34,8 @@ const App: React.FC = () => {
       }
     };
     initChatsDb();
-    setSelectedChat(null);
+    setSelectedChat({} as Chat);
+    
   }, []);
 
 
@@ -47,7 +48,7 @@ const App: React.FC = () => {
             .withAutomaticReconnect()
             .build();
 
-          newConnection.on("ReceiveMessage", (message: TextMessage, status: number) => {
+          newConnection.on("ReceiveMessage", (message: Message, status: number) => {
             if (status == 200) {
               if (DbOpened) {
                 if (message) {
@@ -67,9 +68,14 @@ const App: React.FC = () => {
                     newConnection.invoke("MessagesReaded", messagesReadedPayload);
                   }
 
-                  addMessage(message).then(() => {              
-                    addNewMessage(message);
-                  });
+
+                  const processingMessage = async () => {
+                      await addMessage(message); // add in indexedDb   
+                      addNewMessage(message); // add in Cotext
+                  };
+
+                  processingMessage();
+
 
                 }
               }
@@ -118,6 +124,7 @@ const App: React.FC = () => {
         logout,
         setSelectedChat,
         isAuthenticated,
+        ChangeAvatar
       }}
     >
       <MessengerContex.Provider

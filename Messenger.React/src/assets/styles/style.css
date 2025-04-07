@@ -31,12 +31,12 @@ button:focus {
 #root{
   background-color: rgb(21, 21, 21);
 
-  display: flex;
-  justify-content: center;
+  /* display: flex;
+  justify-content: center; */
 }
-.main-menu{
+/* .main-menu{
   width: 97%;
-}
+} */
 
 .exit-button {
   background-color: #333; /* Темно-сірий */

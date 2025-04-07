@@ -22,6 +22,6 @@ export const getMessagesByChatId = async (token: string, chatId:string): Promise
             Authorization: `Bearer ${token}`
         }
     });
-    console.log(response.data);
+    // console.log(response.data);
     return response.data;
 }

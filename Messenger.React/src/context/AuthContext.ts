@@ -2,6 +2,7 @@ import { createContext } from "react";
 import User from "../Models/User";
 import { HubConnection } from "@microsoft/signalr";
 import Chat from "../Models/Chat";
+import myFile from "../Models/File";
 
 interface AuthContextType {
     selectedChat: Chat | null;
@@ -12,6 +13,7 @@ interface AuthContextType {
     logout: () => void;
     setSelectedChat: (user: Chat) => void;
     isAuthenticated: boolean;  
+    ChangeAvatar: (avatar:myFile) => void;
 }
 
 function noop() { }
@@ -25,6 +27,7 @@ const defaultAuthContext: AuthContextType = {
     logout: noop,
     setSelectedChat: noop,
     isAuthenticated: false,
+    ChangeAvatar: noop
 };
 
 export const AuthContext = createContext(defaultAuthContext);

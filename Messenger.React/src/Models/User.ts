@@ -1,4 +1,5 @@
 import Chat from "./Chat";
+import myFile from "./File";
 import Message from "./Message";
 
 interface User{
@@ -9,6 +10,7 @@ interface User{
     roles: string[],
     messages: Message[],
     chats: Chat[],
+    activeAvatar: myFile
 }
 
 export default User;

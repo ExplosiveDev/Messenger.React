@@ -16,10 +16,43 @@ export const getSavedChats = async (token:string): Promise<ChatsCortage | null> 
         const data = response.data;
         data.groupChats.forEach((chat) => {chat.isMessagesUpdate = false});
         data.privateChats.forEach((chat) => {chat.isMessagesUpdate = false});
-        console.log(data);
+        // console.log(data);
         return data;
     } catch (error) {
         console.error('Search failed:', error);
         return null;
     }
+}
+
+export const createPrivateChat = async (token:string, user2Id:string): Promise<PrivateChat> => {
+    const response = await axios.post(
+        `http://192.168.0.100:5187/Chats/CreatePrivateChat`,
+        null,
+        {
+            params: {
+                user2Id: user2Id
+            },
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        }
+    );
+
+    return response.data as PrivateChat;
+}
+
+export const getChat = async (token:string, chatId:string): Promise<Chat> => {
+    const response = await axios.get(
+        `http://192.168.0.100:5187/Chats/GetChat`,
+        {
+            params: {
+                chatId: chatId
+            },
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        }
+    );
+
+    return response.data as Chat;
 }

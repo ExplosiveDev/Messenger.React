@@ -91,6 +91,7 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
       if (storeName == storeNames.TextMessages || storeName == storeNames.MediaMessages)
         SetLastMessageToChat(data.chatId, data as Message);
 
+
       const transaction = db.transaction(storeName, "readwrite");
       const store = transaction.objectStore(storeName);
 
@@ -179,6 +180,7 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
 
   const getChatsByName = async (name: string): Promise<Chat[]> => {
     const chats = await getChats();
+
     const normalizedName = name.toLowerCase();
 
 
@@ -214,7 +216,7 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
 
   const ChatMessagesUpdate = async (chat: Chat): Promise<void> => {
     chat.isMessagesUpdate = true;
-    console.log(chat);
+    // console.log(chat);
     const storeName = isGroupChat(chat) ? storeNames.GroupChats : storeNames.PrivateChats;
     await addItem(storeName, chat);
   }
@@ -246,11 +248,11 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
 
   const SetLastMessageToChat = async (chatId: string, message: Message): Promise<void> => {
     const chat = await getChat(chatId);
+
     if (chat) {
 
       chat.topMessage = isTextMessage(message) ? message as TextMessage : message as MediaMessage;
       const storeName = isGroupChat(chat) ? storeNames.GroupChats : storeNames.PrivateChats;
-
       await addItem(storeName, chat);
     }
   }
@@ -268,6 +270,17 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
     }
     if(isMediaMessage(message)){
       await addItem(storeNames.MediaMessages, message);
+      return;
+    } 
+  }
+
+  const addChat = async (chat:Chat) : Promise<void> => {
+    if(isPrivateChat(chat)) {
+      await addItem(storeNames.PrivateChats, chat);
+      return;
+    }
+    if(isGroupChat(chat)){
+      await addItem(storeNames.GroupChats, chat);
       return;
     } 
   }
@@ -301,7 +314,7 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
 
     db,
 
-    getChat, getChats, getChatsByName, ChatMessagesUpdate,
+    getChat, getChats, getChatsByName, ChatMessagesUpdate,addChat,
     isPrivateChat, isGroupChat, isTextMessage, isMediaMessage, addMessage,
     getMessagesByChatId, GetCountOfUnReadedMessages, GetUnReadedMessagIds, SetReadedMessages, addMessages
 

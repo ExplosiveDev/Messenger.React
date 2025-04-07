@@ -1,9 +1,13 @@
-import { FC, useState, useRef, useEffect, useCallback, useContext } from "react";
+import { FC, useState, useRef, useEffect, useCallback, useContext, MouseEventHandler } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEllipsisV, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
+import { faEllipsisV, faSignOutAlt, faUser } from "@fortawesome/free-solid-svg-icons";
 import { AuthContext } from "../context/AuthContext";
 
-const ChatMenu: FC = () => {
+interface ChatMenuProps {
+    onProfileSelect: (isSelected: boolean) => void;
+  }
+
+const ChatMenu: FC<ChatMenuProps> = ({onProfileSelect}) => {
     const auth = useContext(AuthContext);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -15,7 +19,7 @@ const ChatMenu: FC = () => {
             menuRef.current &&
             !menuRef.current.contains(event.target as Node) &&
             buttonRef.current &&
-            !buttonRef.current.contains(event.target as Node) // Враховуємо кнопку
+            !buttonRef.current.contains(event.target as Node) 
         ) {
             setIsMenuOpen(false);
         }
@@ -37,55 +41,67 @@ const ChatMenu: FC = () => {
         if (isMenuOpen && menuRef.current && buttonRef.current) {
             const menu = menuRef.current;
             const button = buttonRef.current;
-            const menuRect = menu.getBoundingClientRect();
             const buttonRect = button.getBoundingClientRect();
-
-            let top = buttonRect.bottom + window.scrollY;
-            let left = buttonRect.left + window.scrollX;
-
-            // Перевіряємо вихід за межі екрану
-            if (menuRect.width + buttonRect.left > window.innerWidth) {
-                left = window.innerWidth - menuRect.width - 10;
+    
+            const container = document.querySelector("#chat-container"); 
+    
+            if (container) {
+                const containerRect = container.getBoundingClientRect();
+    
+                menu.style.position = "absolute";
+                menu.style.top = `${buttonRect.bottom - containerRect.top}px`;
+                menu.style.left = `${buttonRect.left - containerRect.left}px`;
+                menu.style.transform = "translateY(5px)";
+                menu.style.zIndex = "1000";
             }
-
-            if (menuRect.height + buttonRect.bottom > window.innerHeight) {
-                top = buttonRect.top - menuRect.height + window.scrollY;
-            }
-
-            menu.style.left = `${left}px`;
-            menu.style.top = `${top}px`;
         }
     }, [isMenuOpen]);
+    
+
     const handleExit = async () => {
         auth.logout();
     };
 
+    const handleProfileClick = (e: React.MouseEvent<HTMLElement>) => {
+        e.preventDefault();
+        onProfileSelect(true);
+        setIsMenuOpen(false);
+    };
+
     return (
-        <div className="position-relative">
+        <div className="position-relative ">
             {/* Кнопка відкриття меню */}
             <button
                 ref={buttonRef}
-                className="btn btn-dark text-light"
+                className="btn btn-secondary text-light"
                 type="button"
                 onClick={() => setIsMenuOpen((prev) => !prev)}
             >
-                <FontAwesomeIcon icon={faEllipsisV} />
+                <FontAwesomeIcon icon={faEllipsisV}/>
             </button>
 
             {/* Меню виходу */}
             {isMenuOpen && (
                 <div 
                     ref={menuRef}
-                    className="bg-dark border rounded p-1"
+                    className="bg-dark border border-secondary rounded p-1"
                     style={{
                         position: "absolute",
                         minWidth: "150px",
                         zIndex: 1000,
                     }}
                 >
-                    <ul className="list-unstyled mb-0">
+                    <ul className="list-unstyled mb-1 border border-secondary rounded">
                         <li>
-                            <button className="btn text-light w-100 d-flex align-items-center" onClick={handleExit}>
+                            <button className="btn text-light w-100 d-flex align-items-center btn-hover" onClick={handleProfileClick}>
+                                <FontAwesomeIcon icon={faUser} className="me-2" />
+                                {auth.user?.userName}
+                            </button>
+                        </li>
+                    </ul>
+                    <ul className="list-unstyled mb-0 border border-secondary rounded">
+                        <li>
+                            <button className="btn text-light w-100 d-flex align-items-center btn-hover" onClick={handleExit}>
                                 <FontAwesomeIcon icon={faSignOutAlt} className="me-2" />
                                 Exit
                             </button>

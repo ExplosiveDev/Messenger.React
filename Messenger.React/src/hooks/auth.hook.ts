@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect, useId } from "react"
 import {secureLocalStorage} from "./secureLocalStorage.hook"
 import User from "../Models/User";
-import { HubConnection, HubConnectionBuilder } from "@microsoft/signalr";
+import myFile from "../Models/File";
 
 
 const UserStorage = 'userData';
@@ -13,7 +13,8 @@ const initState:User = {
     passwordHash: '',
     roles: [],
     messages:[],
-    chats:[]
+    chats:[],
+    activeAvatar: {} as myFile
 };
 
 export const useAuth = () => {
@@ -39,9 +40,26 @@ export const useAuth = () => {
         return data.id;
     }
 
+    const getToken = ():string => {
+        const token:string = getDecryptedObject(UserStorage,secretKey).token;
+        return token;
+    }
+
+    const ChangeAvatar = (avatar:myFile) => {
+        if (!user) return;
+        console.log("Prop",avatar);
+        // Оновлюємо активний аватар у стані
+        const updatedUser = { ...user, activeAvatar: avatar };
+        console.log(updatedUser);
+        setUser(updatedUser);
+
+        // Оновлюємо локальне збереження
+        saveEncryptedObject(UserStorage, { user: updatedUser, token }, secretKey);
+    }
+
     useEffect(() => {
         const data = getDecryptedObject(UserStorage,secretKey)
- 
+        // console.log(data);
         if (data && data.token) {
             login(data.token, data.user)
         }
@@ -50,5 +68,5 @@ export const useAuth = () => {
 
 
 
-    return {getUserId, login, logout, token, user};
+    return {getUserId, getToken, login, logout, token, user, ChangeAvatar};
 }

@@ -16,7 +16,7 @@ const MyRoutes: FC<MyRoutesProps> = ({ isAuthenticated, user }) => {
     if (isAuthenticated) {
         return (
             <>
-                <div className="main-menu d-flex flex-column justify-content-center  ">
+                <div className="main-menu d-flex flex-column justify-content-center" style={{maxWidth: '1800px', margin: '0 auto'}}>
                     <Routes>
                     <Route
                             path="*"

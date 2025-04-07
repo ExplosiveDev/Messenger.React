@@ -2,15 +2,17 @@ body {
     font-family: Arial, sans-serif;
 }
 
-.chat-header, .chat-footer {
+.chat-header,
+.chat-footer {
     background-color: #333;
     padding: 10px;
-    text-align: center;
 }
 
 .sidebar {
-    overflow: visible !important; /* Дозволяє меню виходити за межі */
-    position: relative; /* Забезпечує коректне позиціонування */
+    overflow: visible !important;
+    /* Дозволяє меню виходити за межі */
+    position: relative;
+    /* Забезпечує коректне позиціонування */
     background-color: #1f1f1f;
     border-right: 1px solid #333;
     height: 100vh;
@@ -62,18 +64,18 @@ body {
     cursor: pointer;
 }
 
-.text-color-main-menu{
+.text-color-main-menu {
     color: white;
 }
 
 .message-box {
     display: inline-block;
-    padding: 10px 20px; 
-    border: 1px solid gray; 
-    border-radius: 20px; 
+    padding: 10px 20px;
+    border: 1px solid gray;
+    border-radius: 20px;
     background-color: gray;
-    max-width: 80%; 
-    word-wrap: break-word; 
+    max-width: 80%;
+    word-wrap: break-word;
 }
 
 .message-box img {
@@ -84,31 +86,39 @@ body {
     object-fit: contain;
     border-radius: 8px;
 }
+
 .my-message {
-    background-color: #9370DB; 
+    background-color: #9370DB;
     color: white;
     border: 0px;
-    border-radius: 18px 18px 2px 18px; 
-    padding: 10px 15px;
-    max-width: 60%;
-    word-wrap: break-word;
-    position: relative;
-}
-.other-message {
-    background-color: #555; 
-    color: white;
-    border: 0px;
-    border-radius:  18px 18px 18px 2px; 
+    border-radius: 18px 18px 2px 18px;
     padding: 10px 15px;
     max-width: 60%;
     word-wrap: break-word;
     position: relative;
 }
 
-.chat-name{
+.other-message {
+    background-color: #555;
+    color: white;
+    border: 0px;
+    border-radius: 18px 18px 18px 2px;
+    padding: 10px 15px;
+    max-width: 60%;
+    word-wrap: break-word;
+    position: relative;
+}
+
+.chat-name {
     color: #3a8ef6;
 }
-.chat-hover:hover{
+
+.chat-hover:hover {
+    transition: all .6s ease;
+    background-color: rgb(58, 57, 57);
+}
+
+.btn-hover:hover {
     transition: all .6s ease;
     background-color: rgb(58, 57, 57);
 }
@@ -125,6 +135,7 @@ body {
     color: rgba(255, 255, 255, 0.8);
     margin-right: 5px;
 }
+
 .message-caption {
     color: rgba(255, 255, 255, 0.8);
     font-size: 18px;
@@ -136,26 +147,45 @@ body {
     font-size: 0.9rem;
 }
 
+.chat-photo {
+    width: 50px;
+    /* Розмір фото */
+    height: 50px;
+    border-radius: 50%;
+    /* Робить зображення круглим */
+    object-fit: cover;
+    /* Заповнює контейнер без спотворення */
+}
+
 /* ==== Темний скролбар ==== */
 ::-webkit-scrollbar {
     width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #1f1f1f; /* Темний фон */
+    background: #1f1f1f;
+    /* Темний фон */
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #555; /* Сірий колір повзунка */
+    background: #555;
+    /* Сірий колір повзунка */
     border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #888; /* Світліший при наведенні */
+    background: #888;
+    /* Світліший при наведенні */
 }
 
 .top-message-img {
-    width: 32px; /* або інший розмір */
-    height: auto; /* зберігає пропорції */
-    border-radius: 4px; /* якщо потрібно округлення */
+    width: 32px;
+    height: auto;
+    border-radius: 4px;
 }
+
+.user-status {
+    font-size: 16px;
+    color: #8b8a8a;
+}
+

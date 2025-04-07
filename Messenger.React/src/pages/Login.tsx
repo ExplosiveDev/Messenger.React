@@ -50,6 +50,7 @@ const Login: FC = () => {
 
         try {
             const response = await axios.post<UserLoginReques>('http://192.168.0.100:5187/Users/login', UserLogin);
+            console.log("Login", response.data);
             const data = response.data;
             auth.login(data.token, data.user);
             setUserLogin(initState);
