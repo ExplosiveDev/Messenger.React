@@ -2,12 +2,13 @@ import { FC, useState, useRef, useEffect, useCallback, useContext, MouseEventHan
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEllipsisV, faSignOutAlt, faUser } from "@fortawesome/free-solid-svg-icons";
 import { AuthContext } from "../context/AuthContext";
+import "../assets/styles/MainMenueStyles/ChatMenue.css"
 
 interface ChatMenuProps {
     onProfileSelect: (isSelected: boolean) => void;
-  }
+}
 
-const ChatMenu: FC<ChatMenuProps> = ({onProfileSelect}) => {
+const ChatMenu: FC<ChatMenuProps> = ({ onProfileSelect }) => {
     const auth = useContext(AuthContext);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -19,7 +20,7 @@ const ChatMenu: FC<ChatMenuProps> = ({onProfileSelect}) => {
             menuRef.current &&
             !menuRef.current.contains(event.target as Node) &&
             buttonRef.current &&
-            !buttonRef.current.contains(event.target as Node) 
+            !buttonRef.current.contains(event.target as Node)
         ) {
             setIsMenuOpen(false);
         }
@@ -43,7 +44,7 @@ const ChatMenu: FC<ChatMenuProps> = ({onProfileSelect}) => {
             const button = buttonRef.current;
             const buttonRect = button.getBoundingClientRect();
     
-            const container = document.querySelector("#chat-container"); 
+            const container = document.querySelector("#profile-container");
     
             if (container) {
                 const containerRect = container.getBoundingClientRect();
@@ -56,7 +57,7 @@ const ChatMenu: FC<ChatMenuProps> = ({onProfileSelect}) => {
             }
         }
     }, [isMenuOpen]);
-    
+
 
     const handleExit = async () => {
         auth.logout();
@@ -69,47 +70,35 @@ const ChatMenu: FC<ChatMenuProps> = ({onProfileSelect}) => {
     };
 
     return (
-        <div className="position-relative ">
-            {/* Кнопка відкриття меню */}
-            <button
-                ref={buttonRef}
-                className="btn btn-secondary text-light"
-                type="button"
-                onClick={() => setIsMenuOpen((prev) => !prev)}
-            >
-                <FontAwesomeIcon icon={faEllipsisV}/>
-            </button>
+        <div className="position-relative">
+    <button
+        ref={buttonRef}
+        className="btn btn-secondary text-light"
+        type="button"
+        onClick={() => setIsMenuOpen((prev) => !prev)}
+    >
+        <FontAwesomeIcon icon={faEllipsisV} />
+    </button>
 
-            {/* Меню виходу */}
-            {isMenuOpen && (
-                <div 
-                    ref={menuRef}
-                    className="bg-dark border border-secondary rounded p-1"
-                    style={{
-                        position: "absolute",
-                        minWidth: "150px",
-                        zIndex: 1000,
-                    }}
-                >
-                    <ul className="list-unstyled mb-1 border border-secondary rounded">
-                        <li>
-                            <button className="btn text-light w-100 d-flex align-items-center btn-hover" onClick={handleProfileClick}>
-                                <FontAwesomeIcon icon={faUser} className="me-2" />
-                                {auth.user?.userName}
-                            </button>
-                        </li>
-                    </ul>
-                    <ul className="list-unstyled mb-0 border border-secondary rounded">
-                        <li>
-                            <button className="btn text-light w-100 d-flex align-items-center btn-hover" onClick={handleExit}>
-                                <FontAwesomeIcon icon={faSignOutAlt} className="me-2" />
-                                Exit
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-            )}
+    {isMenuOpen && (
+        <div
+            ref={menuRef}
+            className="profile-container"
+        >
+            <div className="profile-menu">
+                <button  onClick={handleProfileClick}>
+                    <FontAwesomeIcon icon={faUser} className="me-2" />
+                    {auth.user?.userName}
+                </button>
+                <button onClick={handleExit}>
+                    <FontAwesomeIcon icon={faSignOutAlt} className="me-2" />
+                    Exit
+                </button>
+            </div>
         </div>
+    )}
+</div>
+
     );
 };
 

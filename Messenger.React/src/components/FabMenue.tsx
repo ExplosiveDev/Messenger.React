@@ -1,11 +1,20 @@
-import React, { useState } from "react";
+import { FC,MouseEvent, useContext, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTimes, faUsers, faCommentDots, faBullhorn } from "@fortawesome/free-solid-svg-icons";
 import "../assets/styles/MainMenueStyles/FabMenue.css"
+import User from "../Models/User";
+import { AuthContext } from "../context/AuthContext";
+import { getContacts } from "../services/users";
 
-const FabMenu: React.FC = () => {
+const FabMenu: FC = () => {
+    const auth = useContext(AuthContext);
+
     const [isOpen, setIsOpen] = useState(false);
 
+    const handleCreateGroup = async (e: MouseEvent<HTMLButtonElement>) => {
+        const Contacts: User[] = await getContacts(auth.token!);
+        console.log(Contacts);
+    }
     return (
         <div className="fab-container">
             <button
@@ -18,15 +27,15 @@ const FabMenu: React.FC = () => {
 
             {isOpen && (
                 <div className="fab-menu">
-                    <button onClick={() => alert("New Channel")}>
+                    <button >
                         <FontAwesomeIcon icon={faBullhorn} />
                         New Channel
                     </button>
-                    <button onClick={() => alert("New Group")}>
+                    <button onClick={handleCreateGroup}>
                         <FontAwesomeIcon icon={faUsers} />
                         New Group
                     </button>
-                    <button onClick={() => alert("New Private Chat")}>
+                    <button >
                         <FontAwesomeIcon icon={faCommentDots} />
                         New Private Chat
                     </button>

@@ -3,6 +3,7 @@ import Chat from "../Models/Chat";
 import PrivateChat from "../Models/PrivateChat";
 import GroupChat from "../Models/GroupChat";
 import ChatsCortage from "../Models/ChatsCortage";
+import searchedGlobalChats from "../Models/SerchedGlobalChats";
 
 
 
@@ -55,4 +56,17 @@ export const getChat = async (token:string, chatId:string): Promise<Chat> => {
     );
 
     return response.data as Chat;
+}
+
+export const globalChatSearchByName = async (token:string, searchChatName:string): Promise<searchedGlobalChats> => {
+    const response = await axios.get(`http://192.168.0.100:5187/Chats/GetGlobalChatsByName`, {
+        params: { name: searchChatName },
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    console.log(response.data.privateChats);
+
+    return response.data;
 }

@@ -1,54 +1,31 @@
-import { ChangeEvent, FC, FormEvent, MouseEvent, useContext, useEffect, useState } from "react";
+import { ChangeEvent, FC,MouseEvent, useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import RenderMessages from "../components/RenderMessages";
-import axios from "axios";
 import ShowChats from "../components/ShowChats";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft} from '@fortawesome/free-solid-svg-icons';
+import { MessengerContex } from "../context/MessegerContext";
+import Chat from "../Models/Chat";
+import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
+import SearchChats from "../components/SearchChats";
+import ChatsCortage from "../Models/ChatsCortage";
+import { getSavedChats, globalChatSearchByName } from "../services/chats";
+import ChatMenu from "../components/ChatMenue";
+import { getChat as getChatService } from "../services/chats";
+import ProfileMenue from "../components/ProfileMenue";
+import FabMenu from "../components/FabMenue";
+import searchedGlobalChats from "../Models/SerchedGlobalChats";
+import MessageForm from "../components/MessageForm";
 
 import '../assets/styles/bootstrap.min.css';
 import '../assets/styles/MainMenueStyles/MainMenue.css';
 import '../assets/styles/style.css';
-
-import { MessengerContex } from "../context/MessegerContext";
-import Chat from "../Models/Chat";
-import PrivateChat from "../Models/PrivateChat";
-import GroupChat from "../Models/GroupChat";
-import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
-import SearchChats from "../components/SearchChats";
-import ChatsCortage from "../Models/ChatsCortage";
-import { createPrivateChat, getSavedChats } from "../services/chats";
-import ChatMenu from "../components/ChatMenue";
-import FilePicker from "../components/FilePicker";
-import { getChat as getChatService } from "../services/chats";
-import ProfileMenue from "../components/ProfileMenue";
-import FabMenu from "../components/FabMenue";
-
-interface sendTextMessagePayload {
-    content: string,
-    senderId: string
-    chatId: string
-}
-
-interface sendMediaMessagePayload {
-    caption: string,
-    fileId: string,
-    senderId: string
-    chatId: string
-}
-
-interface searcheGlobalChats {
-    privateChats: PrivateChat[],
-    groupChats: GroupChat[]
-}
 
 const Messenger: FC = () => {
     const auth = useContext(AuthContext);
     const messenger = useContext(MessengerContex);
 
     const [searchChatName, setSearchChat] = useState("");
-    const [message, setMessage] = useState("");
-    const [file, setFile] = useState<File | null>(null);
     const [debouncedTerm, setDebouncedTerm] = useState(searchChatName);
     const [savedChats, setSavedChats] = useState<Chat[]>([]);
     const [searchedChats, setSearchedChats] = useState<Chat[]>([]);
@@ -116,14 +93,9 @@ const Messenger: FC = () => {
                     setIsGlobalSearch(false);
                 }
                 else { //Глобальний пошук всіх приватних та групових чатів за назвою                    
-                    const response = await axios.get(`http://192.168.0.100:5187/Chats/GetGlobalChatsByName`, {
-                        params: { name: searchChatName },
-                        headers: {
-                            Authorization: `Bearer ${auth.token}`
-                        }
-                    });
+
                     setIsGlobalSearch(true);
-                    const data: searcheGlobalChats = response.data;
+                    const data: searchedGlobalChats = await globalChatSearchByName(auth.token!, searchChatName);
                     const chats: Chat[] = [...data.privateChats, ...data.groupChats];
                     setSearchedChats(chats);
                 }
@@ -166,34 +138,7 @@ const Messenger: FC = () => {
 
     };
 
-    const handleMessageChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setMessage(e.target.value);
-    };
-
-    const handleSubmitMessage = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (message == "") return;
-        const sendTextMessagePayload: sendTextMessagePayload = {
-            content: message,
-            senderId: auth.user?.id!,
-            chatId: auth.selectedChat!.id,
-        };
-
-        //Якщо чата не існує, створюєм новий чат з відповідним користувачем
-        if (await getChat(auth.selectedChat!.id) == null) {
-            const newChat = await createPrivateChat(auth.token!, auth.selectedChat?.user1Id);
-            await addPrivateChat(newChat);
-            messenger.addNewChat(newChat);
-            auth.setSelectedChat(newChat);
-            sendTextMessagePayload.chatId = newChat.id;
-        }
-
-        auth.connection!.invoke("SendTextMessage", sendTextMessagePayload);
-        setMessage("");
-    };
-
     const handleLeftSearchMode = async (e: MouseEvent<HTMLButtonElement>) => {
-
         setSearchChat("");
         if (DbOpened) {
             try {
@@ -207,43 +152,6 @@ const Messenger: FC = () => {
         if (showProfile) setShowProfile(false);
         setShowSavedChats(true);
     }
-
-    const handleFileSelect = (file: File) => {
-        console.log('File selected:', file);
-        setFile(file);
-    };
-
-    const handlePhotoSelect = (photo: File, caption?: string) => {
-        // console.log('Photo selected:', photo, "Caption : ", caption);
-        const uploadFile = async () => {
-            if (photo) {
-                const formData = new FormData();
-                formData.append("file", photo);
-
-                const response = await axios.post(
-                    `http://192.168.0.100:5187/Files/Upload`,
-                    formData,
-                    {
-                        headers: {
-                            "Content-Type": "multipart/form-data",
-                            Authorization: `Bearer ${auth.token}`,
-                        },
-                    }
-                );
-                const filedId: string = response.data.id;
-                // console.log(filedId)
-                const sendMediaMessagePayload: sendMediaMessagePayload = {
-                    caption: caption ? caption : "",
-                    fileId: filedId,
-                    senderId: auth.user?.id!,
-                    chatId: auth.selectedChat?.id!
-                }
-                // console.log(sendMediaMessagePayload);
-                auth.connection!.invoke("SendMediaMessage", sendMediaMessagePayload);
-            }
-        }
-        uploadFile()
-    };
 
     const onProfileSelect = (isSelected: boolean) => {
         setShowSavedChats(false);
@@ -323,6 +231,7 @@ const Messenger: FC = () => {
                                         const user1 = auth.selectedChat.user1;
                                         const user2 = auth.selectedChat.user2;
                                         const chatUser = user1.id === auth.user?.id ? user2 : user1;
+                                        console.log(chatUser);
                                         return chatUser.activeAvatar.url;
                                     })()
                                 ) : isGroupChat(auth.selectedChat) ? (
@@ -357,23 +266,7 @@ const Messenger: FC = () => {
                                 <RenderMessages key={auth.selectedChat.id} ChatId={auth.selectedChat.id}></RenderMessages>
                             </div>
 
-                            <form onSubmit={handleSubmitMessage} className="d-flex align-items-center gap-2 mb-3 mx-5 px-5">
-                                {/* Кнопка вибору файлу з dropup меню */}
-                                <FilePicker
-                                    onFileSelect={handleFileSelect}
-                                    onPhotoSelect={handlePhotoSelect}
-                                />
-                                {/* Поле вводу повідомлення */}
-                                <input
-                                    type="text"
-                                    className="form-control flex-grow-1"
-                                    placeholder="Message"
-                                    value={message}
-                                    onChange={handleMessageChange}
-                                />
-
-                                <button className="btn btn-primary" type="submit">Send</button>
-                            </form>
+                            <MessageForm/>
                         </>
                     )}
                 </div>
