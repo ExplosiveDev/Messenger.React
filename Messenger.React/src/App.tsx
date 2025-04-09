@@ -7,7 +7,7 @@ import { useAuth } from './hooks/auth.hook';
 import { MessengerContex } from './context/MessegerContext';
 import { useMessage } from './hooks/message.hook';
 import useIndexedDBMessenger from './hooks/indexedDbMessenger.hook';
-import messagesReadedPayload from './Models/messagesReadedPayload';
+import messagesReadedPayload from './Models/ResponsModels/messagesReadedPayload';
 import Message from './Models/Message';
 import Chat from './Models/Chat';
 

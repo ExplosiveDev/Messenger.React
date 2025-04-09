@@ -35,6 +35,7 @@ const ShowChats: FC<ChatsProps> = ({ Chats }) => {
 
   useEffect (() => {
     setChats(Chats);
+    console.log(Chats);
   },[Chats])
 
   useEffect ( () => {
@@ -64,7 +65,7 @@ const ShowChats: FC<ChatsProps> = ({ Chats }) => {
             const chatUser = user1.id === auth.user?.id ? user2 : user1;
             return <ShowChat Chat={chat} ChatName={chatUser.userName} key={chat.id} ChatPhoto= {chatUser.activeAvatar.url || "default-avatar.png"} />;
           } else if (isGroupChat(chat)) {
-            return <ShowChat Chat={chat} ChatName={chat.groupName} key={chat.id} ChatPhoto="..." />;
+            return <ShowChat Chat={chat} ChatName={chat.groupName} key={chat.id} ChatPhoto={chat.activeIcon?.url ? chat.activeIcon.url : "default-avatar.png"} />;
           } else {
             return null;
           }

@@ -4,7 +4,7 @@ import Message from "../Models/Message";
 import ShowMessage from "./ShowMessage";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import { MessengerContex } from "../context/MessegerContext";
-import messagesReadedPayload from "../Models/messagesReadedPayload";
+import messagesReadedPayload from "../Models/ResponsModels/messagesReadedPayload";
 
 interface ChatProps {
     ChatId: string;

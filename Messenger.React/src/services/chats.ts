@@ -2,8 +2,9 @@ import axios from "axios";
 import Chat from "../Models/Chat";
 import PrivateChat from "../Models/PrivateChat";
 import GroupChat from "../Models/GroupChat";
-import ChatsCortage from "../Models/ChatsCortage";
-import searchedGlobalChats from "../Models/SerchedGlobalChats";
+import ChatsCortage from "../Models/ResponsModels/ChatsCortage";
+import searchedGlobalChats from "../Models/ResponsModels/SerchedGlobalChats";
+import CreateGroupChatRequest from "../Models/RequestModels/CreateGroupChatReques";
 
 
 
@@ -23,23 +24,6 @@ export const getSavedChats = async (token:string): Promise<ChatsCortage | null> 
         console.error('Search failed:', error);
         return null;
     }
-}
-
-export const createPrivateChat = async (token:string, user2Id:string): Promise<PrivateChat> => {
-    const response = await axios.post(
-        `http://192.168.0.100:5187/Chats/CreatePrivateChat`,
-        null,
-        {
-            params: {
-                user2Id: user2Id
-            },
-            headers: {
-                Authorization: `Bearer ${token}`,
-            }
-        }
-    );
-
-    return response.data as PrivateChat;
 }
 
 export const getChat = async (token:string, chatId:string): Promise<Chat> => {
@@ -70,3 +54,37 @@ export const globalChatSearchByName = async (token:string, searchChatName:string
 
     return response.data;
 }
+
+export const createPrivateChat = async (token:string, user2Id:string): Promise<PrivateChat> => {
+    const response = await axios.post(
+        `http://192.168.0.100:5187/Chats/CreatePrivateChat`,
+        null,
+        {
+            params: {
+                user2Id: user2Id
+            },
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        }
+    );
+
+    return response.data as PrivateChat;
+}
+
+export const createGroupChat = async (token: string, createGroupChatRequest: CreateGroupChatRequest): Promise<GroupChat> => {
+    const response = await axios.post(
+        `http://192.168.0.100:5187/Chats/CreateGroupChat`,
+        createGroupChatRequest,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        }
+    );
+
+    return response.data;
+};
+
+

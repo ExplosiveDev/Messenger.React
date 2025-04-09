@@ -1,5 +1,5 @@
-import GroupChat from "./GroupChat";
-import PrivateChat from "./PrivateChat";
+import GroupChat from "../GroupChat";
+import PrivateChat from "../PrivateChat";
 
 interface searchedGlobalChats {
     privateChats: PrivateChat[],

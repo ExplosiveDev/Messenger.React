@@ -8,13 +8,13 @@ import { MessengerContex } from "../context/MessegerContext";
 import Chat from "../Models/Chat";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import SearchChats from "../components/SearchChats";
-import ChatsCortage from "../Models/ChatsCortage";
+import ChatsCortage from "../Models/ResponsModels/ChatsCortage";
 import { getSavedChats, globalChatSearchByName } from "../services/chats";
 import ChatMenu from "../components/ChatMenue";
 import { getChat as getChatService } from "../services/chats";
 import ProfileMenue from "../components/ProfileMenue";
 import FabMenu from "../components/FabMenue";
-import searchedGlobalChats from "../Models/SerchedGlobalChats";
+import searchedGlobalChats from "../Models/ResponsModels/SerchedGlobalChats";
 import MessageForm from "../components/MessageForm";
 
 import '../assets/styles/bootstrap.min.css';
@@ -35,7 +35,7 @@ const Messenger: FC = () => {
     const [showProfile, setShowProfile] = useState(false)
     const [isGlobalSearch, setIsGlobalSearch] = useState(false);
 
-    const { openDb, getChats, getChatsByName, isGroupChat, isPrivateChat, getChat, addPrivateChats, addPrivateChat, addGroupChats, addChat } = useIndexedDBMessenger()
+    const { openDb, getChats, getChatsByName, isGroupChat, isPrivateChat, getChat, addPrivateChats, addGroupChats, addChat } = useIndexedDBMessenger()
 
     const [DbOpened, setDbOpened] = useState(false);
 
@@ -235,7 +235,7 @@ const Messenger: FC = () => {
                                         return chatUser.activeAvatar.url;
                                     })()
                                 ) : isGroupChat(auth.selectedChat) ? (
-                                    "url..."
+                                    auth.selectedChat.activeIcon?.url ? auth.selectedChat.activeIcon.url : "default-avatar.png"
                                 ) : (
                                     "url..."
                                 )}
@@ -265,7 +265,6 @@ const Messenger: FC = () => {
                             <div className="messages ms-5 me-5 ps-5 pe-5">
                                 <RenderMessages key={auth.selectedChat.id} ChatId={auth.selectedChat.id}></RenderMessages>
                             </div>
-
                             <MessageForm/>
                         </>
                     )}

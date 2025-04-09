@@ -126,14 +126,12 @@ body {
 .message-footer {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
     font-size: 0.8rem;
     margin-top: 5px;
 }
 
 .message-date {
     color: rgba(255, 255, 255, 0.8);
-    margin-right: 5px;
 }
 
 .message-caption {
@@ -189,3 +187,15 @@ body {
     color: #8b8a8a;
 }
 
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.sender-name {
+    font-size: 0.75rem;
+    color: #6ca0f6;
+    margin-bottom: 2px;
+}
