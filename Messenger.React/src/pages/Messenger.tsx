@@ -1,9 +1,9 @@
-import { ChangeEvent, FC,MouseEvent, useContext, useEffect, useState } from "react";
+import { ChangeEvent, FC, MouseEvent, useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import RenderMessages from "../components/RenderMessages";
 import ShowChats from "../components/ShowChats";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft} from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { MessengerContex } from "../context/MessegerContext";
 import Chat from "../Models/Chat";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
@@ -16,10 +16,13 @@ import ProfileMenue from "../components/ProfileMenue";
 import FabMenu from "../components/FabMenue";
 import searchedGlobalChats from "../Models/ResponsModels/SerchedGlobalChats";
 import MessageForm from "../components/MessageForm";
+import { motion, AnimatePresence } from "framer-motion";
 
 import '../assets/styles/bootstrap.min.css';
 import '../assets/styles/MainMenueStyles/MainMenue.css';
 import '../assets/styles/style.css';
+import ChatHeader from "../components/ChatHeader";
+import ShowChatInfo from "../components/ShowChatInfo";
 
 const Messenger: FC = () => {
     const auth = useContext(AuthContext);
@@ -34,8 +37,10 @@ const Messenger: FC = () => {
     const [showSearchedChats, setShowSearchedSavedChats] = useState(false);
     const [showProfile, setShowProfile] = useState(false)
     const [isGlobalSearch, setIsGlobalSearch] = useState(false);
+    const [showChatInfo, setShowChatInfo] = useState(false);
 
-    const { openDb, getChats, getChatsByName, isGroupChat, isPrivateChat, getChat, addPrivateChats, addGroupChats, addChat } = useIndexedDBMessenger()
+
+    const { openDb, getChats, getChatsByName, getChat, addPrivateChats, addGroupChats, addChat } = useIndexedDBMessenger()
 
     const [DbOpened, setDbOpened] = useState(false);
 
@@ -187,8 +192,8 @@ const Messenger: FC = () => {
                             }
                             {
                                 showProfile && (
-                                    <div className="col-10 d-flex justify-content-center align-items-center px-0">
-                                        <h4 className="m-0" >Profile </h4>
+                                    <div className="col-10 d-flex  align-items-center px-0">
+                                        <h4 className="m-0 fw-bold" >Profile </h4>
                                     </div>
                                 )
 
@@ -207,7 +212,7 @@ const Messenger: FC = () => {
                                     Chats={savedChats}
                                     key={"savedChats"}
                                 />
-                                <FabMenu/>
+                                <FabMenu />
                             </>
                         )
                     }
@@ -222,53 +227,34 @@ const Messenger: FC = () => {
                     }
                 </div>
 
-                <div className="col-9 chat ps-0 pe-0">
+                <div className={`${showChatInfo ? "col-6" : "col-9"} chat ps-0 pe-0`}>
                     {!!auth.selectedChat && auth.selectedChat!.id != undefined && (
                         <>
-                            <div className="chat-header d-flex">
-                                <img className="chat-photo me-2" src={isPrivateChat(auth.selectedChat) ? (
-                                    (() => {
-                                        const user1 = auth.selectedChat.user1;
-                                        const user2 = auth.selectedChat.user2;
-                                        const chatUser = user1.id === auth.user?.id ? user2 : user1;
-                                        console.log(chatUser);
-                                        return chatUser.activeAvatar.url;
-                                    })()
-                                ) : isGroupChat(auth.selectedChat) ? (
-                                    auth.selectedChat.activeIcon?.url ? auth.selectedChat.activeIcon.url : "default-avatar.png"
-                                ) : (
-                                    "url..."
-                                )}
-                                    alt="Chat" />
-                                <div className="row ">
-                                    <div className="d-flex col-12 " >
-                                        <h4 className="m-0">
-                                            {isPrivateChat(auth.selectedChat) ? (
-                                                (() => {
-                                                    const user1 = auth.selectedChat.user1;
-                                                    const user2 = auth.selectedChat.user2;
-                                                    const chatUser = user1.id === auth.user?.id ? user2 : user1;
-                                                    return chatUser.userName;
-                                                })()
-                                            ) : isGroupChat(auth.selectedChat) ? (
-                                                auth.selectedChat.groupName
-                                            ) : (
-                                                "Unknown Chat"
-                                            )}
-                                        </h4>
-                                    </div>
-                                    <div className="d-flex col-12 " >
-                                        <h6 className="m-0 user-status">Online</h6>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="messages ms-5 me-5 ps-5 pe-5">
-                                <RenderMessages key={auth.selectedChat.id} ChatId={auth.selectedChat.id}></RenderMessages>
-                            </div>
-                            <MessageForm/>
+                            <ChatHeader selectedChat={auth.selectedChat} user={auth.user!} onOpenChatInfo={() => setShowChatInfo(true)} />
+
+                            <RenderMessages key={auth.selectedChat.id} ChatId={auth.selectedChat.id} />
+
+                            <MessageForm />
                         </>
                     )}
                 </div>
+                <AnimatePresence mode="wait">
+                    {showChatInfo && !!auth.selectedChat && auth.selectedChat!.id !== undefined && (
+                         <motion.div
+                         key="chat-info"
+                         className="col-3 sidebar py-2 pe-0 ps-0"
+                         initial={{ x: 300, opacity: 0 }}
+                         animate={{ x: 0, opacity: 1 }}
+                         transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                     >
+                            <ShowChatInfo
+                                selectedChat={auth.selectedChat}
+                                onCloseChatInfo={() => setShowChatInfo(false)}
+                            />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
             </div>
         </div>
     );

@@ -5,6 +5,8 @@ import ShowMessage from "./ShowMessage";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import { MessengerContex } from "../context/MessegerContext";
 import messagesReadedPayload from "../Models/ResponsModels/messagesReadedPayload";
+import { motion, AnimatePresence } from "framer-motion";
+
 
 interface ChatProps {
     ChatId: string;
@@ -14,7 +16,7 @@ interface ChatProps {
 const RenderMessages: FC<ChatProps> = ({ ChatId }) => {
     const auth = useContext(AuthContext);
     const messenger = useContext(MessengerContex);
-    const { openDb, db, getMessagesByChatId,GetUnReadedMessagIds,SetReadedMessages,getChat } = useIndexedDBMessenger();
+    const { openDb, db, getMessagesByChatId, GetUnReadedMessagIds, SetReadedMessages, getChat } = useIndexedDBMessenger();
     const [messages, setMessages] = useState<Message[]>([]);
     const [dbOpened, setDbOpened] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -36,19 +38,19 @@ const RenderMessages: FC<ChatProps> = ({ ChatId }) => {
     useEffect(() => {
 
         async function markMessagesAsRead() {
-            if (dbOpened ) {   
-                if(auth.selectedChat == null || await getChat(auth.selectedChat.id) == null) return;                    
+            if (dbOpened) {
+                if (auth.selectedChat == null || await getChat(auth.selectedChat.id) == null) return;
 
-                const unreadIds = await GetUnReadedMessagIds(auth.selectedChat!.id); 
-                
+                const unreadIds = await GetUnReadedMessagIds(auth.selectedChat!.id);
+
                 if (unreadIds.length > 0) {
                     const messagesReadedPayload: messagesReadedPayload = {
-                        chatId: auth.selectedChat.id, 
+                        chatId: auth.selectedChat.id,
                         userId: auth.user?.id!,
-                        messegeIds: unreadIds    
-                
+                        messegeIds: unreadIds
+
                     };
-        
+
                     await auth.connection!.invoke("MessagesReaded", messagesReadedPayload);
 
                     await SetReadedMessages(unreadIds)
@@ -57,7 +59,7 @@ const RenderMessages: FC<ChatProps> = ({ ChatId }) => {
         }
 
         markMessagesAsRead();
-    },[dbOpened, auth.selectedChat])
+    }, [dbOpened, auth.selectedChat])
 
     useEffect(() => {
         const fetchMessages = async () => {
@@ -70,7 +72,7 @@ const RenderMessages: FC<ChatProps> = ({ ChatId }) => {
             }
         };
         fetchMessages();
-    }, [dbOpened, ChatId, messenger.message]); 
+    }, [dbOpened, ChatId, messenger.message]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -78,16 +80,27 @@ const RenderMessages: FC<ChatProps> = ({ ChatId }) => {
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages]); 
+    }, [messages]);
 
     return (
-        <div className="row">
-            {messages.length > 0 && (
-                messages.map((message) => {
-                    return <ShowMessage Message={message} key={message.id} />;
-                })
-            ) }
-            <div ref={messagesEndRef} />
+        <div className="messages ms-5 me-5 ps-5 pe-5">
+            <div className="row">
+                <AnimatePresence initial={false}>
+                    {messages.length > 0 && messages.map((message) => (
+                        <motion.div
+                            key={message.id}
+                            initial={{ x: message.senderId === auth.user?.id ? 50 : -50, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: message.senderId === auth.user?.id ? 50 : -50, opacity: 0 }}
+                            transition={{ duration: 0.1, ease: "easeOut" }}
+                            layout
+                        >
+                            <ShowMessage Message={message} />
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+                <div ref={messagesEndRef} />
+            </div>
         </div>
     );
 };

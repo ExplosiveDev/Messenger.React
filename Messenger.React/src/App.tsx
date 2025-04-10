@@ -1,5 +1,5 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import React, {useEffect, useState } from 'react';
+import { HubConnectionBuilder } from '@microsoft/signalr';
 import { AuthContext } from './context/AuthContext';
 import MyRoutes from './pages/MyRoutes';
 import { useConnection } from './hooks/connection.hook';
@@ -13,11 +13,11 @@ import Chat from './Models/Chat';
 
 
 const App: React.FC = () => {
-  const { getUserId, getToken, login, logout, token, user, ChangeAvatar } = useAuth();
+  const { getUserId, login, logout, token, user, ChangeAvatar } = useAuth();
   const { message, chats, addNewMessage, addNewChat, initChats } = useMessage();
 
   const { connection, setConnection, selectedChat, setSelectedChat } = useConnection();
-  const { openDb, addMessage, getChat, addChat } = useIndexedDBMessenger();
+  const { openDb, addMessage} = useIndexedDBMessenger();
 
   const isAuthenticated = !!token;
 
@@ -54,8 +54,6 @@ const App: React.FC = () => {
                 if (message) {
                   const selectedChatId = window.sessionStorage.getItem("selectedChatId");
                   const userId = getUserId();
-                      //якщо юзер вже перегляжає чат  && якщо це той юзер якому надіслали 
-                      // - тоді ми надсилаємо до серверу що це повідомлення було прочитане 
                   if (selectedChatId == message.chatId && userId != message.senderId) {
                     message.isReaded = true;
 
@@ -82,7 +80,6 @@ const App: React.FC = () => {
 
             }
           });
-
 
           newConnection.on("ReceiveReadedMessageIds", (ids: string[]) => {
             console.log("ids");

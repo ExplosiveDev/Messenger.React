@@ -91,7 +91,6 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
     return (
         <div className="col-12 my-1 px-2">
             <button className="btn w-100 chat-hover position-relative d-flex align-items-center" type="button" onClick={selectChat}>
-                {/* Картинка чату зліва */}
                 <img className="chat-photo me-2" src={ChatPhoto} alt="Chat" />
     
                 <div className="d-flex flex-column text-start">

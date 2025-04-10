@@ -6,7 +6,8 @@ import GroupChat from "../Models/GroupChat";
 import Chat from "../Models/Chat";
 import { MessengerContex } from "../context/MessegerContext";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
-import FabMenu from "./FabMenue";
+import { motion } from "framer-motion"; 
+
 
 interface ChatsProps {
   Chats: Chat[];
@@ -35,7 +36,6 @@ const ShowChats: FC<ChatsProps> = ({ Chats }) => {
 
   useEffect (() => {
     setChats(Chats);
-    console.log(Chats);
   },[Chats])
 
   useEffect ( () => {
@@ -57,20 +57,49 @@ const ShowChats: FC<ChatsProps> = ({ Chats }) => {
 
   return (
     <div className="d-flex flex-column m-0">
-      {Array.isArray(chats) && chats.length > 0 &&
-        chats.map((chat) => {
-          if (isPrivateChat(chat)) {
-            const user1 = chat.user1;
-            const user2 = chat.user2;
-            const chatUser = user1.id === auth.user?.id ? user2 : user1;
-            return <ShowChat Chat={chat} ChatName={chatUser.userName} key={chat.id} ChatPhoto= {chatUser.activeAvatar.url || "default-avatar.png"} />;
-          } else if (isGroupChat(chat)) {
-            return <ShowChat Chat={chat} ChatName={chat.groupName} key={chat.id} ChatPhoto={chat.activeIcon?.url ? chat.activeIcon.url : "default-avatar.png"} />;
-          } else {
-            return null;
-          }
-        })}
-    </div>
+    {Array.isArray(chats) && chats.length > 0 &&
+      chats.map((chat, index) => {
+        const delay = index * 0.05;
+
+        if (isPrivateChat(chat)) {
+          const user1 = chat.user1;
+          const user2 = chat.user2;
+          const chatUser = user1.id === auth.user?.id ? user2 : user1;
+
+          return (
+            <motion.div
+              key={chat.id}
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.3, delay }}
+            >
+              <ShowChat
+                Chat={chat}
+                ChatName={chatUser.userName}
+                ChatPhoto={chatUser.activeAvatar.url || "default-avatar.png"}
+              />
+            </motion.div>
+          );
+        } else if (isGroupChat(chat)) {
+          return (
+            <motion.div
+              key={chat.id}
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.3, delay }}
+            >
+              <ShowChat
+                Chat={chat}
+                ChatName={chat.groupName}
+                ChatPhoto={chat.activeIcon?.url || "default-avatar.png"}
+              />
+            </motion.div>
+          );
+        } else {
+          return null;
+        }
+      })}
+  </div>
   );
 };
 
