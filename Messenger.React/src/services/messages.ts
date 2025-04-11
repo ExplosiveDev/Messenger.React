@@ -1,6 +1,6 @@
 import axios from "axios";
 import Message from "../Models/Message";
-import MessagesCortage from "../Models/MessagesCortage";
+import MessagesCortage from "../Models/ResponsModels/MessagesCortage"; 
 
 
 export const getAllMessages = async (token: string): Promise<Message[]> => {

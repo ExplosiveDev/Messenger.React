@@ -13,7 +13,7 @@ import Chat from './Models/Chat';
 
 
 const App: React.FC = () => {
-  const { getUserId, login, logout, token, user, ChangeAvatar } = useAuth();
+  const { getUserId, login, logout, token, user, ChangeAvatar, ChangeUserName } = useAuth();
   const { message, chats, addNewMessage, addNewChat, initChats } = useMessage();
 
   const { connection, setConnection, selectedChat, setSelectedChat } = useConnection();
@@ -121,7 +121,8 @@ const App: React.FC = () => {
         logout,
         setSelectedChat,
         isAuthenticated,
-        ChangeAvatar
+        ChangeAvatar,
+        ChangeUserName
       }}
     >
       <MessengerContex.Provider

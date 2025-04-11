@@ -1,0 +1,47 @@
+.input-wrapper {
+    margin-top: 8px;
+}
+
+.styled-fieldset {
+    border: 1px solid rgb(99, 99, 99);
+    border-radius: 12px;
+    padding: 16px 12px 10px;
+    position: relative;
+    margin: 0;
+    transition: border-color 0.3s ease;
+}
+
+.styled-fieldset:focus-within {
+    border-color: white;
+}
+
+.styled-legend {
+    font-size: 12px;
+    color: rgb(114, 114, 114);
+    padding: 0 6px;
+    margin: 0;
+    position: absolute;
+    top: -8px;
+    left: 12px;
+    line-height: 1;
+    background-color: #1f1f1f;
+    white-space: nowrap;
+    width: auto;
+    max-width: fit-content;
+    display: inline;
+    transition: color .6s ease;
+}
+
+.styled-fieldset:focus-within .styled-legend {
+    color: white;
+}
+
+.styled-input {
+    width: 100%;
+    background-color: transparent;
+    color: white;
+    border: none;
+    outline: none;
+    font-size: 16px;
+}
+

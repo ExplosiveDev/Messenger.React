@@ -7,6 +7,7 @@ import { AuthContext } from "../context/AuthContext";
 import User from "../Models/User";
 import GroupChat from "../Models/GroupChat";
 import UserChat from "../Models/UserChat";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface ShowChatInfoProps {
     selectedChat: Chat;
@@ -16,7 +17,6 @@ interface ShowChatInfoProps {
 const ShowChatInfo: FC<ShowChatInfoProps> = ({ selectedChat, onCloseChatInfo }) => {
     const auth = useContext(AuthContext);
     const { isPrivateChat, isGroupChat } = useIndexedDBMessenger();
-
     let isPrivateTypeChat!: boolean;
     let AvatarUrl: string = "";
     //if is private chat
@@ -43,111 +43,128 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({ selectedChat, onCloseChatInfo }) 
     const handleCloseChatInformation = () => onCloseChatInfo?.();
 
     return (
-        <div className="row px-2 mx-2 " >
-            <div className="col-12 d-flex align-items-center px-0" >
-                <button className="btn btn-secondary me-3" type="button" id="left" aria-expanded="false" onClick={handleCloseChatInformation} >
-                    <FontAwesomeIcon icon={faClose} />
-                </button>
-                <h4 className="m-0 fw-bold">{isPrivateTypeChat ? "User info" : "Group info"} </h4>
-            </div>
-
-            <div
-                className="d-flex flex-column align-items-center text-light justify-content-center"
-                style={{
-                    height: "300px"
-                }}
+        <AnimatePresence mode="wait">
+            <motion.div
+                key="chat-info"
+                className="col-3 sidebar py-2 pe-0 ps-0"
+                initial={{ x: 45, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: .4, ease: [0.25, 0.1, 0.25, 1] }}
             >
+                <div className="row px-2 mx-2 " >
+                    <div className="col-12 d-flex align-items-center px-0" >
+                        <button className="btn btn-secondary me-3" type="button" id="left" aria-expanded="false" onClick={handleCloseChatInformation} >
+                            <FontAwesomeIcon icon={faClose} />
+                        </button>
+                        <h4 className="m-0 fw-bold">{isPrivateTypeChat ? "User info" : "Group info"} </h4>
+                    </div>
 
-                <div
-                    className="rounded-circle overflow-hidden position-relative"
-                    style={{
-                        width: "160px",
-                        height: "160px",
-
-                    }}>
-
-                    <img
-                        src={AvatarUrl}
-                        alt="User"
+                    <div
+                        className="d-flex flex-column align-items-center text-light justify-content-center"
                         style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            transition: "filter 0.3s ease",
+                            height: "300px"
                         }}
-                    />
-                </div>
-                <h4 className="mt-2">{isPrivateTypeChat ? ChatUser!.userName : (selectedChat as GroupChat).groupName}</h4>
-                <span className="text-secondary">{isPrivateTypeChat ? "Online" : (selectedChat as GroupChat).userChats.length + " members"}</span>
-            </div>
+                    >
 
+                        <div
+                            className="rounded-circle overflow-hidden position-relative"
+                            style={{
+                                width: "160px",
+                                height: "160px",
 
-            {isPrivateTypeChat && (
-                <>
-                    <hr></hr>
-                    <button className="btn col-12 p-0 mt-2 my-1 chat-hover ">
-                        <div className="row row-cols py-1 px-3 ">
-                            <div className="d-flex col-3 justify-content-center text-light p-0" >
-                                <div className="d-flex align-items-center">
-                                    <FontAwesomeIcon icon={faPhone} fontSize={30} />
-                                </div>
-                            </div>
-                            <div className="d-flex col-9 boreder  justify-content-start text-light">
-                                <div className="row">
-                                    <div className="col-12 d-flex align-items-center">
-                                        <h4 className="m-0">{formatPhoneNumber(ChatUser! ? ChatUser.phone : "+38**********")}</h4>
-                                    </div>
-                                    <div className="col-12 d-flex align-items-center">
-                                        <h6 className="m-0 text-secondary">Phone</h6>
-                                    </div>
-                                </div>
-                            </div>
+                            }}>
+
+                            <img
+                                src={AvatarUrl}
+                                alt="User"
+                                style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "cover",
+                                    transition: "filter 0.3s ease",
+                                }}
+                            />
                         </div>
-                    </button>
-                    <button className="btn col-12 p-0 mt-2 my-1 chat-hover " >
-                        <div className="row row-cols py-1 px-3 ">
-                            <div className="d-flex col-3  justify-content-center text-light p-0" >
-                                <div className="d-flex align-items-center">
-                                    <FontAwesomeIcon icon={faAt} fontSize={30} />
-                                </div>
-                            </div>
-                            <div className="d-flex col-9 boreder  justify-content-start text-light">
-                                <div className="row">
-                                    <div className="col-12 d-flex align-items-center">
-                                        <h4 className="m-0">{ChatUser! ? ChatUser.userName : "User"}</h4>
+                        <h4 className="mt-2">{isPrivateTypeChat ? ChatUser!.userName : (selectedChat as GroupChat).groupName}</h4>
+                        <span className="text-secondary">{isPrivateTypeChat ? "Online" : (selectedChat as GroupChat).userChats.length + " members"}</span>
+                    </div>
+
+
+                    {isPrivateTypeChat && (
+                        <>
+                            <hr></hr>
+                            <button className="btn col-12 p-0 mt-2 my-1 chat-hover ">
+                                <div className="row row-cols py-1 px-3 ">
+                                    <div className="d-flex col-3 justify-content-center text-light p-0" >
+                                        <div className="d-flex align-items-center">
+                                            <FontAwesomeIcon icon={faPhone} fontSize={30} />
+                                        </div>
                                     </div>
-                                    <div className="col-12 d-flex align-items-center">
-                                        <h6 className="m-0 text-secondary">Username</h6>
+                                    <div className="d-flex col-9 boreder  justify-content-start text-light">
+                                        <div className="row">
+                                            <div className="col-12 d-flex align-items-center">
+                                                <h4 className="m-0">{formatPhoneNumber(ChatUser! ? ChatUser.phone : "+38**********")}</h4>
+                                            </div>
+                                            <div className="col-12 d-flex align-items-center">
+                                                <h6 className="m-0 text-secondary">Phone</h6>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-
-                            </div>
-                        </div>
-                    </button>
-                </>
-            )}
-
-            {!isPrivateTypeChat && (
-                <div className="d-flex flex-column m-0">
-                    <hr></hr>
-                    <h4 className="m-0 text-center text-secondary">Members</h4>
-                    {(selectedChat as GroupChat).userChats.map((userChat: UserChat) => (
-                        <div className="col-12 my-1 px-2">
-                            <button className="btn w-100 chat-hover position-relative d-flex align-items-center" type="button">
-                                <img className="chat-photo me-2" src={userChat.user.activeAvatar.url} alt="Chat" />
-
-                                <div className="d-flex flex-column text-start">
-                                    <h3 className="chat-name m-0 text-light">{userChat.user.userName}</h3>                              
                                 </div>
                             </button>
+                            <button className="btn col-12 p-0 mt-2 my-1 chat-hover " >
+                                <div className="row row-cols py-1 px-3 ">
+                                    <div className="d-flex col-3  justify-content-center text-light p-0" >
+                                        <div className="d-flex align-items-center">
+                                            <FontAwesomeIcon icon={faAt} fontSize={30} />
+                                        </div>
+                                    </div>
+                                    <div className="d-flex col-9 boreder  justify-content-start text-light">
+                                        <div className="row">
+                                            <div className="col-12 d-flex align-items-center">
+                                                <h4 className="m-0">{ChatUser! ? ChatUser.userName : "User"}</h4>
+                                            </div>
+                                            <div className="col-12 d-flex align-items-center">
+                                                <h6 className="m-0 text-secondary">Username</h6>
+                                            </div>
+                                        </div>
 
+                                    </div>
+                                </div>
+                            </button>
+                        </>
+                    )}
+
+                    {!isPrivateTypeChat && (
+                        <div className="d-flex flex-column m-0">
+                            <hr />
+                            <h4 className="m-0 text-center text-secondary">Members</h4>
+                            <AnimatePresence>
+                                {(selectedChat as GroupChat).userChats.map((userChat: UserChat) => (
+                                    <motion.div
+                                        key={userChat.userId}
+                                        initial={{ y: -10, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        transition={{ duration: 0.3 }}
+                                        layout
+                                    >
+                                        <div className="col-12 my-1 px-2">
+                                            <button className="btn w-100 chat-hover position-relative d-flex align-items-center" type="button">
+                                                <img className="chat-photo me-2" src={userChat.user.activeAvatar.url} alt="Chat" />
+                                                <div className="d-flex flex-column text-start">
+                                                    <h3 className="chat-name m-0 text-light">{userChat.user.userName}</h3>
+                                                </div>
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
                         </div>
-                    ))}
+                    )}
+
                 </div>
-            )}
-
-        </div>
-
+            </motion.div>
+        </AnimatePresence>
     );
 };
 

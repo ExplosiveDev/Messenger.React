@@ -1,11 +1,11 @@
-import { FC, useState, useRef, useEffect, useCallback, useContext, MouseEventHandler } from "react";
+import { FC, useState, useRef, useEffect, useCallback, useContext } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEllipsisV, faSignOutAlt, faUser } from "@fortawesome/free-solid-svg-icons";
 import { AuthContext } from "../context/AuthContext";
-import "../assets/styles/MainMenueStyles/ChatMenue.css"
+import "../assets/styles/MainMenueStyles/Menue.css"
 
 interface ChatMenuProps {
-    onProfileSelect: (isSelected: boolean) => void;
+    onProfileSelect: () => void;
 }
 
 const ChatMenu: FC<ChatMenuProps> = ({ onProfileSelect }) => {
@@ -43,12 +43,12 @@ const ChatMenu: FC<ChatMenuProps> = ({ onProfileSelect }) => {
             const menu = menuRef.current;
             const button = buttonRef.current;
             const buttonRect = button.getBoundingClientRect();
-    
+
             const container = document.querySelector("#profile-container");
-    
+
             if (container) {
                 const containerRect = container.getBoundingClientRect();
-    
+
                 menu.style.position = "absolute";
                 menu.style.top = `${buttonRect.bottom - containerRect.top}px`;
                 menu.style.left = `${buttonRect.left - containerRect.left}px`;
@@ -65,39 +65,39 @@ const ChatMenu: FC<ChatMenuProps> = ({ onProfileSelect }) => {
 
     const handleProfileClick = (e: React.MouseEvent<HTMLElement>) => {
         e.preventDefault();
-        onProfileSelect(true);
+        onProfileSelect();
         setIsMenuOpen(false);
     };
 
     return (
         <div className="position-relative">
-    <button
-        ref={buttonRef}
-        className="btn btn-secondary text-light"
-        type="button"
-        onClick={() => setIsMenuOpen((prev) => !prev)}
-    >
-        <FontAwesomeIcon icon={faEllipsisV} />
-    </button>
+            <button
+                ref={buttonRef}
+                className="btn btn-secondary text-light"
+                type="button"
+                onClick={() => setIsMenuOpen((prev) => !prev)}
+            >
+                <FontAwesomeIcon icon={faEllipsisV} />
+            </button>
 
-    {isMenuOpen && (
-        <div
-            ref={menuRef}
-            className="profile-container"
-        >
-            <div className="profile-menu">
-                <button  onClick={handleProfileClick}>
-                    <FontAwesomeIcon icon={faUser} className="me-2" />
-                    {auth.user?.userName}
-                </button>
-                <button onClick={handleExit}>
-                    <FontAwesomeIcon icon={faSignOutAlt} className="me-2" />
-                    Exit
-                </button>
-            </div>
+            {isMenuOpen && (
+                <div
+                    ref={menuRef}
+                    className="profile-container"
+                >
+                    <div className="profile-menu">
+                        <button onClick={handleProfileClick}>
+                            <FontAwesomeIcon icon={faUser} className="me-2" />
+                            {auth.user?.userName}
+                        </button>
+                        <button onClick={handleExit}>
+                            <FontAwesomeIcon icon={faSignOutAlt} className="me-2" />
+                            Exit
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
-    )}
-</div>
 
     );
 };

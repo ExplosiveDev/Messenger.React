@@ -45,28 +45,28 @@ export const useAuth = () => {
         return token;
     }
 
-    const ChangeAvatar = (avatar:myFile) => {
-        if (!user) return;
-        console.log("Prop",avatar);
-        // Оновлюємо активний аватар у стані
-        const updatedUser = { ...user, activeAvatar: avatar };
-        console.log(updatedUser);
-        setUser(updatedUser);
-
-        // Оновлюємо локальне збереження
-        saveEncryptedObject(UserStorage, { user: updatedUser, token }, secretKey);
-    }
-
     useEffect(() => {
         const data = getDecryptedObject(UserStorage,secretKey)
-        // console.log(data);
         if (data && data.token) {
             login(data.token, data.user)
         }
     }, [login])
 
+    const ChangeAvatar = (avatar:myFile) => {
+        if (!user) return;
+        const updatedUser = { ...user, activeAvatar: avatar };
+        setUser(updatedUser);
+
+        saveEncryptedObject(UserStorage, { user: updatedUser, token }, secretKey);
+    }
+
+    const ChangeUserName = (newUserName:string) => {
+        if (!user) return;
+        const updatedUser = { ...user, userName: newUserName };
+        setUser(updatedUser);
+        saveEncryptedObject(UserStorage, { user: updatedUser, token }, secretKey);
+    }
 
 
-
-    return {getUserId, getToken, login, logout, token, user, ChangeAvatar};
+    return {getUserId, getToken, login, logout, ChangeAvatar, ChangeUserName, token, user};
 }

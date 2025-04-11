@@ -14,6 +14,7 @@ interface AuthContextType {
     setSelectedChat: (user: Chat) => void;
     isAuthenticated: boolean;  
     ChangeAvatar: (avatar:myFile) => void;
+    ChangeUserName: (newUserName:string) => void;
 }
 
 function noop() { }
@@ -27,7 +28,8 @@ const defaultAuthContext: AuthContextType = {
     logout: noop,
     setSelectedChat: noop,
     isAuthenticated: false,
-    ChangeAvatar: noop
+    ChangeAvatar: noop,
+    ChangeUserName: noop
 };
 
 export const AuthContext = createContext(defaultAuthContext);

@@ -9,3 +9,18 @@ export const getContacts = async (token: string): Promise<User[]> => {
     });
     return response.data;
 }
+
+export const ChangeUserFields = async (token: string, newUserName: string): Promise<string> => {
+    const response = await axios.post(
+        'http://192.168.0.100:5187/Users/ChangeUserFields',
+        newUserName,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        }
+
+    );
+    return response.data;
+}
