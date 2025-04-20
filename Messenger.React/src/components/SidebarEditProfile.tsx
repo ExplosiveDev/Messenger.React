@@ -1,4 +1,4 @@
-import { faArrowLeft, faPlus, faTimes, faPhone, faAt, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faPlus, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AnimatePresence, motion } from "framer-motion";
 import { MouseEvent, ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
@@ -6,19 +6,17 @@ import { AuthContext } from "../context/AuthContext";
 import axios from "axios";
 import User from "../Models/User";
 import myFile from "../Models/File";
-
-import "../assets/styles/EditProfile.css"
 import { ChangeUserFields } from "../services/users";
+import "../assets/styles/EditProfile.css"
+import "../assets/styles/MainMenueStyles/Componets.css"
+import ChangePhotoModal from "./Modal/ChangePhotoModal";
 
 interface SidebarEditProfileProps {
     User: User;
     onLeftEditProfileMode: () => void;
 }
 
-
-
 const SidebarEditProfile: FC<SidebarEditProfileProps> = ({ User, onLeftEditProfileMode }) => {
-
     const [editedUserName, setEditedUserName] = useState(User.userName);
     const [image, setImage] = useState<File | null>(null);
     const [hover, setHover] = useState(false);
@@ -116,48 +114,32 @@ const SidebarEditProfile: FC<SidebarEditProfileProps> = ({ User, onLeftEditProfi
                 </div>
                 <div className="row px-2 mx-2">
                     <div
-                        className="d-flex flex-column align-items-center text-light justify-content-center"
-                        style={{
-                            height: "300px"
-                        }}
-                    >
+                        className="d-flex flex-column align-items-center text-light justify-content-center avatar-container">
                         <div
-                            className="rounded-circle overflow-hidden position-relative"
-                            style={{
-                                width: "130px",
-                                height: "130px",
-                                cursor: "pointer",
-                            }}
+                            className="rounded-circle overflow-hidden position-relative avatar-size pointer"
                             onMouseEnter={() => setHover(true)}
                             onMouseLeave={() => setHover(false)}
-                            onClick={() => document.getElementById("fileInput")?.click()}
+                            onClick={() => document.getElementById("fileInputEditProfile")?.click()}
                         >
                             <img
                                 src={User.activeAvatar.url != null ? User.activeAvatar.url : "http://192.168.0.100:5187/uploads/user.png"}
                                 alt="User"
+                                className="avatar"
                                 style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "cover",
                                     transition: "filter 0.3s ease",
                                     filter: hover ? "brightness(60%)" : "brightness(100%)",
                                 }}
                             />
                             <div
-                                className="position-absolute top-50 start-50 translate-middle"
-                                style={{
-                                    color: "white",
-                                    fontSize: hover ? "40px" : "32px",
-                                    transition: "0.3s ease",
-                                    fontWeight: "bold",
-                                }}
+                                className="position-absolute top-50 start-50 translate-middle avatar-change-icon"
+                                style={{ fontSize: hover ? "40px" : "32px" }}
                             >
                                 <FontAwesomeIcon icon={faPlus} />
                             </div>
                         </div>
                         <input
                             type="file"
-                            id="fileInput"
+                            id="fileInputEditProfile"
                             accept="image/*"
                             style={{ display: "none" }}
                             onChange={handleImageChange}
@@ -166,56 +148,15 @@ const SidebarEditProfile: FC<SidebarEditProfileProps> = ({ User, onLeftEditProfi
                         <span className="text-secondary">Online</span>
 
                         {showModal && (
-                            <div className="modal-overlay">
-                                <div className="modal-content dark-modal" ref={modalRef}>
-                                    <div className="modal-header">
-                                        <h5 className="modal-title">Фото</h5>
-                                        <button
-                                            className="close-btn"
-                                            onClick={() => setShowModal(false)}
-                                        >
-                                            <FontAwesomeIcon icon={faTimes} />
-                                        </button>
-                                    </div>
-
-                                    <div className="modal-body d-flex justify-content-center">
-                                        {image && (
-                                            <>
-                                                <div className="rounded-circle overflow-hidden position-relative image-preview-container"
-                                                    style={{
-                                                        width: "250px",
-                                                        height: "250px",
-                                                    }}>
-                                                    <img
-                                                        src={URL.createObjectURL(image)}
-                                                        alt="Preview"
-                                                        className="image-preview"
-                                                        style={{
-                                                            width: "100%",
-                                                            height: "100%",
-                                                            objectFit: "cover",
-                                                            transition: "filter 0.3s ease",
-                                                            filter: hover ? "brightness(60%)" : "brightness(100%)",
-                                                        }}
-                                                    />
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-                                    <div className="modal-footer">
-                                        <button
-                                            className="btn-primary"
-                                            onClick={handleSubmitPhoto}
-                                        >
-                                            Змінити аватар
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                            <ChangePhotoModal 
+                                onCloseModal={() => {setShowModal(false)}}
+                                onSubmitPhoto={handleSubmitPhoto}
+                                hover={hover}
+                                image={image}
+                            />
                         )}
 
                     </div>
-
 
                     <hr></hr>
 

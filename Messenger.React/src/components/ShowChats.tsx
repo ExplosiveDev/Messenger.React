@@ -32,7 +32,22 @@ const ShowChats: FC<ChatsProps> = ({ Chats }) => {
         }
     }; 
     initDb();
+
   },[])
+
+  useEffect(() => {
+    if (!auth.connection) return;
+    const handleRemovedChat = (chatId: string) => {
+      console.log("Received removed chat:", chatId);
+      setChats(prev => prev.filter(m => m.id !== chatId));
+    };
+  
+    auth.connection.on("ReceiveRemovedChatId", handleRemovedChat);
+  
+    return () => {
+      auth.connection?.off("ReceiveRemovedChatId", handleRemovedChat);
+    };
+  }, [auth.connection]);
 
   useEffect (() => {
     setChats(Chats);
@@ -54,6 +69,9 @@ const ShowChats: FC<ChatsProps> = ({ Chats }) => {
   const isGroupChat = (chat: Chat): chat is GroupChat => {
     return (chat as GroupChat).groupName !== undefined;
   };            
+
+
+
 
   return (
     <div className="d-flex flex-column m-0">

@@ -3,7 +3,6 @@ import { AuthContext } from "../context/AuthContext";
 import Message from "../Models/Message";
 import { format, parse } from "date-fns";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
-import { MessengerContex } from "../context/MessegerContext";
 import UserChat from "../Models/UserChat";
 
 interface MessageProps {
@@ -37,7 +36,7 @@ const ShowMessage: FC<MessageProps> = ({ Message }) => {
     return (
         <div className={`col-12 d-flex ${isMyMessage ? "justify-content-end" : "justify-content-start"} align-items-end`}>
             {!isMyMessage && isGroupChat(auth.selectedChat!) && (
-                <img src={senderAvatarUrl} alt="avatar" className="avatar mb-1" />
+                <img src={senderAvatarUrl} alt="avatar" className="avatar-mini mb-1" />
             )}
 
             <div className={`message-box mt-2 ${isMyMessage ? "my-message" : "other-message"}`}>

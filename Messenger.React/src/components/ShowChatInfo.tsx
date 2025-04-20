@@ -1,13 +1,18 @@
-import { FC, useContext } from "react";
+import { ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
 import Chat from "../Models/Chat";
-import { faPlus, faPhone, faAt, faArrowLeft, faClose } from "@fortawesome/free-solid-svg-icons";
+import {faClose, faEdit, faPlus} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import { AuthContext } from "../context/AuthContext";
 import User from "../Models/User";
 import GroupChat from "../Models/GroupChat";
-import UserChat from "../Models/UserChat";
 import { AnimatePresence, motion } from "framer-motion";
+import "../assets/styles/MainMenueStyles/Componets.css"
+import axios from "axios";
+import myFile from "../Models/File";
+import GroupMembers from "./ChatInfo/GroupMembers";
+import UserInfo from "./ChatInfo/UserInfo";
+import ChangePhotoModal from "./Modal/ChangePhotoModal";
 
 interface ShowChatInfoProps {
     selectedChat: Chat;
@@ -17,11 +22,10 @@ interface ShowChatInfoProps {
 const ShowChatInfo: FC<ShowChatInfoProps> = ({ selectedChat, onCloseChatInfo }) => {
     const auth = useContext(AuthContext);
     const { isPrivateChat, isGroupChat } = useIndexedDBMessenger();
+
     let isPrivateTypeChat!: boolean;
     let AvatarUrl: string = "";
-    //if is private chat
     let ChatUser: User;
-
 
     if (isPrivateChat(selectedChat)) {
         const user1 = selectedChat.user1;
@@ -36,11 +40,68 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({ selectedChat, onCloseChatInfo }) 
         AvatarUrl = selectedChat.activeIcon.url ? selectedChat.activeIcon.url : "http://192.168.0.100:5187/uploads/groups.png";
     }
 
-    const formatPhoneNumber = (phone: string) => {
-        return phone.replace(/^(\+?38)?(\d{3})(\d{3})(\d{2})(\d{2})$/, "+38 ($2) $3 $4 $5");
+    const modalRef = useRef<HTMLDivElement>(null);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [image, setImage] = useState<File | null>(null);
+    const [hover, setHover] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [isChatNameEditing, setIsChatNameEditing] = useState(false);
+    const [editedChatName, setEditedChatName] = useState(
+        isPrivateTypeChat ? ChatUser!.userName : (selectedChat as GroupChat).groupName
+    );
+
+    const handleCloseChatInformation = () => {
+        isChatNameEditing && setIsChatNameEditing(false);
+        isEditMode ? setIsEditMode(false) : onCloseChatInfo?.();
+    } 
+
+    const handleOpenEditChat = () => setIsEditMode(true);
+
+    useEffect(() => {
+        const handleClickOutside = (event: globalThis.MouseEvent) => {
+            if (modalRef.current && showModal && !modalRef.current.contains(event.target as Node)) {
+                setShowModal(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+
+    }, [showModal]);
+
+    const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files?.[0]) {
+            setImage(e.target.files[0]);
+            setShowModal(true);
+            e.target.value = '';
+        }
     };
 
-    const handleCloseChatInformation = () => onCloseChatInfo?.();
+    const handleSubmitPhoto = () => {
+        if (image) {
+            setShowModal(false)
+            const uploadAvatar = async () => {
+                const formData = new FormData();
+                formData.append("file", image);
+                const response = await axios.post(
+                    `http://192.168.0.100:5187/Files/UploadAvatar`,
+                    formData,
+                    {
+                        headers: {
+                            "Content-Type": "multipart/form-data",
+                            Authorization: `Bearer ${auth.token}`,
+                        },
+                    }
+                );
+                const avatar: myFile = response.data.activeAvatar;
+                auth.ChangeAvatar(avatar);
+            };
+            uploadAvatar();
+        }
+    };
+
+    const handleChangeChatName = (e: ChangeEvent<HTMLInputElement>) => {
+        setEditedChatName(e.target.value);
+    };
 
     return (
         <AnimatePresence mode="wait">
@@ -53,113 +114,116 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({ selectedChat, onCloseChatInfo }) 
             >
                 <div className="row px-2 mx-2 " >
                     <div className="col-12 d-flex align-items-center px-0" >
-                        <button className="btn btn-secondary me-3" type="button" id="left" aria-expanded="false" onClick={handleCloseChatInformation} >
-                            <FontAwesomeIcon icon={faClose} />
-                        </button>
-                        <h4 className="m-0 fw-bold">{isPrivateTypeChat ? "User info" : "Group info"} </h4>
+                        <div className="col-2 d-flex  pe-0 ">
+                            <button className="btn btn-secondary me-3" type="button" id="left" aria-expanded="false" onClick={handleCloseChatInformation} >
+                                <FontAwesomeIcon icon={faClose} />
+                            </button>
+                        </div>
+                        <div className="col-8 d-flex  align-items-center px-0">
+                            <h4 className="m-0 fw-bold">{isPrivateTypeChat ? "User info" : isEditMode ? "Edit Group info" : "Group info"} </h4>
+                        </div>
+                        {!isPrivateTypeChat && !isEditMode && (selectedChat as GroupChat).adminId == auth.user!.id && (
+                            <div className="col-2 d-flex pe-0 justify-content-end">
+                                <button className="btn btn-secondary " type="button" id="edit" aria-expanded="false" onClick={handleOpenEditChat}>
+                                    <FontAwesomeIcon icon={faEdit} />
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     <div
-                        className="d-flex flex-column align-items-center text-light justify-content-center"
-                        style={{
-                            height: "300px"
-                        }}
-                    >
-
+                        className="d-flex flex-column align-items-center text-light justify-content-center avatar-container">
                         <div
-                            className="rounded-circle overflow-hidden position-relative"
-                            style={{
-                                width: "160px",
-                                height: "160px",
-
-                            }}>
-
+                            className={`rounded-circle overflow-hidden position-relative avatar-size ${isEditMode ? "pointer" : ""}`}
+                            onMouseEnter={() => setHover(true)}
+                            onMouseLeave={() => setHover(false)}
+                            onClick={isEditMode ? () => document.getElementById("fileInputEditChat")?.click() : undefined}
+                        >
                             <img
                                 src={AvatarUrl}
-                                alt="User"
-                                style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "cover",
-                                    transition: "filter 0.3s ease",
-                                }}
+                                alt="Chat"
+                                className="avatar"
+                                style={
+                                    isEditMode
+                                        ? {
+                                            transition: "filter 0.3s ease",
+                                            filter: hover ? "brightness(60%)" : "brightness(100%)",
+                                        }
+                                        : undefined
+                                }
+
                             />
+                            {isEditMode && (
+                                <div
+                                    className="position-absolute top-50 start-50 translate-middle avatar-change-icon"
+                                    style={{ fontSize: hover ? "40px" : "32px" }}
+                                >
+                                    <FontAwesomeIcon icon={faPlus} />
+                                </div>
+                            )}
+
                         </div>
-                        <h4 className="mt-2">{isPrivateTypeChat ? ChatUser!.userName : (selectedChat as GroupChat).groupName}</h4>
+                        {isEditMode && (
+                            <input
+                                type="file"
+                                id="fileInputEditChat"
+                                accept="image/*"
+                                style={{ display: "none" }}
+                                onChange={handleImageChange}
+                            />
+                        )}
+
+                        <div className="d-flex justify-content-between align-items-start position-relative mt-2">
+                            {isChatNameEditing ? (
+                                <div className="input-wrapper">
+                                    <fieldset className="styled-fieldset">
+                                        <legend className="styled-legend">Group name</legend>
+                                        <input
+                                            type="text"
+                                            value={editedChatName}
+                                            className="styled-input"
+                                            onChange={handleChangeChatName}
+                                        />
+                                    </fieldset>
+                                </div>
+                            ) : (
+                                <h4 className={`${isEditMode ? "me-3" : ""}`}>
+                                    {isPrivateTypeChat ? ChatUser!.userName : (selectedChat as GroupChat).groupName}
+                                </h4>
+                            )}
+
+                            {!isPrivateTypeChat && isEditMode && (
+                                <FontAwesomeIcon
+                                    className="position-absolute top-0 end-0 pointer"
+                                    fontSize={isChatNameEditing ? "20px" : "15px"}
+                                    icon={isChatNameEditing ? faClose : faEdit}
+                                    onClick={() => { setIsChatNameEditing(!isChatNameEditing) }}
+                                />
+                            )}
+                        </div>
+
                         <span className="text-secondary">{isPrivateTypeChat ? "Online" : (selectedChat as GroupChat).userChats.length + " members"}</span>
+
+                        {showModal && (
+                            <ChangePhotoModal
+                                onCloseModal={() => {setShowModal(false)}}
+                                onSubmitPhoto={handleSubmitPhoto}
+                                hover={hover}
+                                image={image}
+                            />
+                        )}
+
                     </div>
 
-
                     {isPrivateTypeChat && (
-                        <>
-                            <hr></hr>
-                            <button className="btn col-12 p-0 mt-2 my-1 chat-hover ">
-                                <div className="row row-cols py-1 px-3 ">
-                                    <div className="d-flex col-3 justify-content-center text-light p-0" >
-                                        <div className="d-flex align-items-center">
-                                            <FontAwesomeIcon icon={faPhone} fontSize={30} />
-                                        </div>
-                                    </div>
-                                    <div className="d-flex col-9 boreder  justify-content-start text-light">
-                                        <div className="row">
-                                            <div className="col-12 d-flex align-items-center">
-                                                <h4 className="m-0">{formatPhoneNumber(ChatUser! ? ChatUser.phone : "+38**********")}</h4>
-                                            </div>
-                                            <div className="col-12 d-flex align-items-center">
-                                                <h6 className="m-0 text-secondary">Phone</h6>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </button>
-                            <button className="btn col-12 p-0 mt-2 my-1 chat-hover " >
-                                <div className="row row-cols py-1 px-3 ">
-                                    <div className="d-flex col-3  justify-content-center text-light p-0" >
-                                        <div className="d-flex align-items-center">
-                                            <FontAwesomeIcon icon={faAt} fontSize={30} />
-                                        </div>
-                                    </div>
-                                    <div className="d-flex col-9 boreder  justify-content-start text-light">
-                                        <div className="row">
-                                            <div className="col-12 d-flex align-items-center">
-                                                <h4 className="m-0">{ChatUser! ? ChatUser.userName : "User"}</h4>
-                                            </div>
-                                            <div className="col-12 d-flex align-items-center">
-                                                <h6 className="m-0 text-secondary">Username</h6>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </div>
-                            </button>
-                        </>
+                        <UserInfo User={ChatUser!}/>
                     )}
 
                     {!isPrivateTypeChat && (
-                        <div className="d-flex flex-column m-0">
-                            <hr />
-                            <h4 className="m-0 text-center text-secondary">Members</h4>
-                            <AnimatePresence>
-                                {(selectedChat as GroupChat).userChats.map((userChat: UserChat) => (
-                                    <motion.div
-                                        key={userChat.userId}
-                                        initial={{ y: -10, opacity: 0 }}
-                                        animate={{ y: 0, opacity: 1 }}
-                                        transition={{ duration: 0.3 }}
-                                        layout
-                                    >
-                                        <div className="col-12 my-1 px-2">
-                                            <button className="btn w-100 chat-hover position-relative d-flex align-items-center" type="button">
-                                                <img className="chat-photo me-2" src={userChat.user.activeAvatar.url} alt="Chat" />
-                                                <div className="d-flex flex-column text-start">
-                                                    <h3 className="chat-name m-0 text-light">{userChat.user.userName}</h3>
-                                                </div>
-                                            </button>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                        </div>
+                        <GroupMembers 
+                            Chat={(selectedChat as GroupChat)} 
+                            
+                        />
                     )}
 
                 </div>

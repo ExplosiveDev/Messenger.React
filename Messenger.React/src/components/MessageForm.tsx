@@ -5,32 +5,23 @@ import {createPrivateChat } from "../services/chats";
 import FilePicker from "./FilePicker";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import { uploadMedia } from "../services/files";
+import SendTextMessageRequest from "../Models/RequestModels/SendTextMessageRequest";
+import TextMessage from "../Models/TextMessage";
+import SendMediaMessageRequest from "../Models/RequestModels/SendMediaMessageRequest";
+import MediaMessage from "../Models/MediaMessage";
+import {SendTextMessage,SendMediaMessage } from "../services/messages";
 
-interface sendTextMessagePayload {
-    content: string,
-    senderId: string
-    chatId: string
-}
-
-interface sendMediaMessagePayload {
-    caption: string,
-    fileId: string,
-    senderId: string
-    chatId: string
-}
 
 const MessageForm: FC = () => {
 
     const auth = useContext(AuthContext);
     const messenger = useContext(MessengerContex);
-
+    
     const { openDb, getChat, addPrivateChat } = useIndexedDBMessenger()
     const [DbOpened, setDbOpened] = useState(false);
 
-
     const [message, setMessage] = useState("");
     const [file, setFile] = useState<File | null>(null);
-
 
     const handleMessageChange = (e: ChangeEvent<HTMLInputElement>) => {
         setMessage(e.target.value);
@@ -52,9 +43,8 @@ const MessageForm: FC = () => {
     const handleSubmitMessage = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (message == "") return;
-        const sendTextMessagePayload: sendTextMessagePayload = {
+        const sendTextMessageRequest: SendTextMessageRequest = {
             content: message,
-            senderId: auth.user?.id!,
             chatId: auth.selectedChat!.id,
         };
 
@@ -64,10 +54,15 @@ const MessageForm: FC = () => {
             await addPrivateChat(newChat);
             messenger.addNewChat(newChat);
             auth.setSelectedChat(newChat);
-            sendTextMessagePayload.chatId = newChat.id;
+            sendTextMessageRequest.chatId = newChat.id;
         }
 
-        auth.connection!.invoke("SendTextMessage", sendTextMessagePayload);
+
+        const textMessage:TextMessage | null = await SendTextMessage(auth.token!, sendTextMessageRequest);
+        console.log(textMessage);
+        if (textMessage) {
+            auth.connection!.invoke("SendTextMessage", JSON.parse(JSON.stringify(textMessage)));
+        }
         setMessage("");
     };
 
@@ -77,23 +72,30 @@ const MessageForm: FC = () => {
     };
 
     const handlePhotoSelect = (photo: File, caption?: string) => {
-        // console.log('Photo selected:', photo, "Caption : ", caption);
         const uploadFile = async () => {
             if (photo) {
+                const sendMediaMessageRequest: SendMediaMessageRequest = {
+                    fileId: "",
+                    caption: caption ? caption : "",
+                    chatId: auth.selectedChat!.id,
+                };       
+
+                if (await getChat(auth.selectedChat!.id) == null) {
+                    const newChat = await createPrivateChat(auth.token!, auth.selectedChat?.user1Id);
+                    await addPrivateChat(newChat);
+                    messenger.addNewChat(newChat);
+                    auth.setSelectedChat(newChat);
+                    sendMediaMessageRequest.chatId = newChat.id;
+                }
+
                 const formData = new FormData();
                 formData.append("file", photo);
-
                 const filedId: string = await uploadMedia(auth.token!, formData);
-
-                // console.log(filedId)
-                const sendMediaMessagePayload: sendMediaMessagePayload = {
-                    caption: caption ? caption : "",
-                    fileId: filedId,
-                    senderId: auth.user?.id!,
-                    chatId: auth.selectedChat?.id!
+                sendMediaMessageRequest.fileId = filedId;
+                const mediaMessage:MediaMessage | null = await SendMediaMessage(auth.token!, sendMediaMessageRequest);
+                if(mediaMessage){
+                    auth.connection!.invoke("SendMediaMessage", mediaMessage);
                 }
-                // console.log(sendMediaMessagePayload);
-                auth.connection!.invoke("SendMediaMessage", sendMediaMessagePayload);
             }
         }
         uploadFile()

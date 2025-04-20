@@ -5,6 +5,7 @@ import GroupChat from "../Models/GroupChat";
 import ChatsCortage from "../Models/ResponsModels/ChatsCortage";
 import searchedGlobalChats from "../Models/ResponsModels/SerchedGlobalChats";
 import CreateGroupChatRequest from "../Models/RequestModels/CreateGroupChatReques";
+import RemoveMemberRequest from "../Models/RequestModels/RemoveMemberRequest";
 
 
 
@@ -85,6 +86,21 @@ export const createGroupChat = async (token: string, createGroupChatRequest: Cre
     );
 
     return response.data;
+};
+
+export const RemoveMember = async (token: string, removeMemberRequest: RemoveMemberRequest): Promise<string | null> => {
+    const response = await axios.post(
+        `http://192.168.0.100:5187/Chats/RemoveMember`,
+        removeMemberRequest,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        }
+    );
+
+    return response.status === 200 ? response.data : null;
 };
 
 

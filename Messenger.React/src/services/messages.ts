@@ -1,6 +1,10 @@
 import axios from "axios";
 import Message from "../Models/Message";
 import MessagesCortage from "../Models/ResponsModels/MessagesCortage"; 
+import SendTextMessageRequest from "../Models/RequestModels/SendTextMessageRequest";
+import TextMessage from "../Models/TextMessage";
+import SendMediaMessageRequest from "../Models/RequestModels/SendMediaMessageRequest";
+import MediaMessage from "../Models/MediaMessage";
 
 
 export const getAllMessages = async (token: string): Promise<Message[]> => {
@@ -24,4 +28,34 @@ export const getMessagesByChatId = async (token: string, chatId:string): Promise
     });
     // console.log(response.data);
     return response.data;
+}
+
+export const SendTextMessage = async (token: string, sendTextMessageRequest:SendTextMessageRequest): Promise<TextMessage | null> => {
+    const response = await axios.post(
+        `http://192.168.0.100:5187/Messages/SendTextMessage`,
+        sendTextMessageRequest,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        }
+    );
+
+    return response.status === 200 ? response.data : null;
+}
+
+export const SendMediaMessage = async (token: string, sendMediaMessageRequest:SendMediaMessageRequest): Promise<MediaMessage | null> => {
+    const response = await axios.post(
+        `http://192.168.0.100:5187/Messages/SendMediaMessage`,
+        sendMediaMessageRequest,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        }
+    );
+
+    return response.status === 200 ? response.data : null;
 }

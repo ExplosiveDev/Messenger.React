@@ -1,0 +1,28 @@
+
+.avatar-container{
+    height: 300px;
+}
+
+.avatar-size{
+    width: 160px;
+    height: 160px;
+}
+
+.pointer{
+    cursor: pointer;
+}
+
+.avatar{
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+.avatar-change-icon{
+    color: white;
+    transition: 0.3s ease;
+    font-weight: bold;
+}
+.hover-container:hover .delete-btn {
+    opacity: 1 !important;
+  }

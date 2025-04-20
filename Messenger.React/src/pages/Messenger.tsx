@@ -33,10 +33,11 @@ const Messenger: FC = () => {
     const [isGlobalSearch, setIsGlobalSearch] = useState(false);
     const [showSavedChats, setShowSavedChats] = useState(true);
     const [showSearchedChats, setShowSearchedSavedChats] = useState(false);
+
     const [showProfile, setShowProfile] = useState(false)
     const [showEditProfile, setShowEditProfile] = useState(false)
-    const [showChatInfo, setShowChatInfo] = useState(false);
 
+    const [showChatInfo, setShowChatInfo] = useState(false);
 
     const { openDb, getChats, getChatsByName, getChat, addPrivateChats, addGroupChats, addChat } = useIndexedDBMessenger()
 
@@ -159,13 +160,7 @@ const Messenger: FC = () => {
         setShowProfile(true);
     }
 
-    const onEditProfileSelect = () => {
-        setShowEditProfile(true);
-    }
 
-    const onLeftEditProfileMode = () => {
-        setShowEditProfile(false);
-    }
     return (
         <div className="h-100 text-color-main-menu">
             <div className="row h-100">
@@ -189,14 +184,14 @@ const Messenger: FC = () => {
                     <SidebarProfile 
                         User={auth.user} 
                         handleLeftProfileMode={handleLeftSearchMode} 
-                        handleEditProfileMode={onEditProfileSelect}
+                        handleEditProfileMode={() => setShowEditProfile(true)}
                         >
                     </SidebarProfile>
                 )}
 
                 {showEditProfile && auth.user && (
                     <SidebarEditProfile 
-                        onLeftEditProfileMode={onLeftEditProfileMode}
+                        onLeftEditProfileMode={() => setShowEditProfile(false)}
                         User={auth.user} 
                     >
 
@@ -216,14 +211,12 @@ const Messenger: FC = () => {
                     )}
                 </div>
 
-                {showChatInfo && !!auth.selectedChat && auth.selectedChat!.id !== undefined && (
+                {(showChatInfo) && !!auth.selectedChat && auth.selectedChat!.id !== undefined && (
                     <ShowChatInfo
                         selectedChat={auth.selectedChat}
                         onCloseChatInfo={() => setShowChatInfo(false)}
                     />
                 )}
-
-
             </div>
         </div>
     );

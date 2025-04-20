@@ -81,7 +81,6 @@ const RenderMessages: FC<ChatProps> = ({ ChatId }) => {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
-
     return (
         <div className="messages ms-5 me-5 ps-5 pe-5">
             <div className="row">

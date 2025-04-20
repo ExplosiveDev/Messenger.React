@@ -8,6 +8,7 @@ import { AuthContext } from "../context/AuthContext";
 import { parse } from 'date-fns';
 import TextMessage from "../Models/TextMessage";
 import MediaMessage from "../Models/MediaMessage";
+import UserChat from "../Models/UserChat";
 
 function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1) {
   const [db, setDb] = useState<IDBDatabase | null>(null);
@@ -285,6 +286,21 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
     } 
   }
 
+  const removeMember = async (chatId:string, memberId:string) =>{
+    const chat = await getChat(chatId);
+
+    if(chat){
+      const updatedUsersChat = chat.userChats.filter((uc: UserChat) => uc.userId !== memberId);
+
+        const updatedChat = {
+            ...chat,
+            usersChat: updatedUsersChat
+        };
+
+        await addChat(updatedChat); 
+    }
+  }
+
 
   return {
     openDb,
@@ -314,7 +330,7 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
 
     db,
 
-    getChat, getChats, getChatsByName, ChatMessagesUpdate,addChat,
+    getChat, getChats, getChatsByName, ChatMessagesUpdate, addChat, removeMember,
     isPrivateChat, isGroupChat, isTextMessage, isMediaMessage, addMessage,
     getMessagesByChatId, GetCountOfUnReadedMessages, GetUnReadedMessagIds, SetReadedMessages, addMessages
 
