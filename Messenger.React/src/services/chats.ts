@@ -6,6 +6,7 @@ import ChatsCortage from "../Models/ResponsModels/ChatsCortage";
 import searchedGlobalChats from "../Models/ResponsModels/SerchedGlobalChats";
 import CreateGroupChatRequest from "../Models/RequestModels/CreateGroupChatReques";
 import RemoveMemberRequest from "../Models/RequestModels/RemoveMemberRequest";
+import ChangeChatNameRequest from "../Models/RequestModels/ChangeChatNameRequest";
 
 
 
@@ -92,6 +93,21 @@ export const RemoveMember = async (token: string, removeMemberRequest: RemoveMem
     const response = await axios.post(
         `http://192.168.0.100:5187/Chats/RemoveMember`,
         removeMemberRequest,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        }
+    );
+
+    return response.status === 200 ? response.data : null;
+};
+
+export const ChangeChatName = async (token: string, changeChatRequest: ChangeChatNameRequest): Promise<string | null> => {
+    const response = await axios.post(
+        `http://192.168.0.100:5187/Chats/ChangeChatName`,
+        changeChatRequest,
         {
             headers: {
                 Authorization: `Bearer ${token}`,

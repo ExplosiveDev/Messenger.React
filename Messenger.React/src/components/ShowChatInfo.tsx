@@ -1,6 +1,6 @@
-import { ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
+import { MouseEvent, ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
 import Chat from "../Models/Chat";
-import {faClose, faEdit, faPlus} from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faClose, faEdit, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import { AuthContext } from "../context/AuthContext";
@@ -13,6 +13,8 @@ import myFile from "../Models/File";
 import GroupMembers from "./ChatInfo/GroupMembers";
 import UserInfo from "./ChatInfo/UserInfo";
 import ChangePhotoModal from "./Modal/ChangePhotoModal";
+import { ChangeChatName } from "../services/chats";
+import ChangeChatNameRequest from "../Models/RequestModels/ChangeChatNameRequest";
 
 interface ShowChatInfoProps {
     selectedChat: Chat;
@@ -49,11 +51,12 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({ selectedChat, onCloseChatInfo }) 
     const [editedChatName, setEditedChatName] = useState(
         isPrivateTypeChat ? ChatUser!.userName : (selectedChat as GroupChat).groupName
     );
+    const [showButtonSave, setShowButtonSave] = useState(false);
 
     const handleCloseChatInformation = () => {
         isChatNameEditing && setIsChatNameEditing(false);
         isEditMode ? setIsEditMode(false) : onCloseChatInfo?.();
-    } 
+    }
 
     const handleOpenEditChat = () => setIsEditMode(true);
 
@@ -101,7 +104,37 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({ selectedChat, onCloseChatInfo }) 
 
     const handleChangeChatName = (e: ChangeEvent<HTMLInputElement>) => {
         setEditedChatName(e.target.value);
+        if (e.target.value != (selectedChat as GroupChat).groupName) setShowButtonSave(true);
+        else setShowButtonSave(false);
     };
+
+    useEffect(() => {
+        if (!isChatNameEditing) {
+            setShowButtonSave(false);
+            setEditedChatName((selectedChat as GroupChat).groupName);
+        }
+    }, [isChatNameEditing])
+
+
+    const handleSaveChanges = async (e: MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        if (editedChatName) {
+            const ChangeUserName = async () => {
+
+                const changeChatNameRequest: ChangeChatNameRequest = {
+                    newName: editedChatName,
+                    chatId: selectedChat.id
+                };
+                const newChatName = await ChangeChatName(auth.token!, changeChatNameRequest);
+                if (newChatName) {
+                    auth.connection?.invoke("ChangeChatName", {chatId:selectedChat.id, newChatName:editedChatName});
+                }
+
+            }
+            ChangeUserName();
+        }
+    }
+
 
     return (
         <AnimatePresence mode="wait">
@@ -206,7 +239,7 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({ selectedChat, onCloseChatInfo }) 
 
                         {showModal && (
                             <ChangePhotoModal
-                                onCloseModal={() => {setShowModal(false)}}
+                                onCloseModal={() => { setShowModal(false) }}
                                 onSubmitPhoto={handleSubmitPhoto}
                                 hover={hover}
                                 image={image}
@@ -216,17 +249,31 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({ selectedChat, onCloseChatInfo }) 
                     </div>
 
                     {isPrivateTypeChat && (
-                        <UserInfo User={ChatUser!}/>
+                        <UserInfo User={ChatUser!} />
                     )}
 
                     {!isPrivateTypeChat && (
-                        <GroupMembers 
-                            Chat={(selectedChat as GroupChat)} 
-                            
+                        <GroupMembers
+                            Chat={(selectedChat as GroupChat)}
                         />
                     )}
 
                 </div>
+                {showButtonSave && (
+                    <motion.div className="fab-container"
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                    >
+                        <button
+                            className="fab chat-hover"
+                            aria-label="Floating Action Button"
+                            onClick={handleSaveChanges}
+                        >
+                            <FontAwesomeIcon icon={faCheck} />
+                        </button>
+                    </motion.div>
+                )}
             </motion.div>
         </AnimatePresence>
     );

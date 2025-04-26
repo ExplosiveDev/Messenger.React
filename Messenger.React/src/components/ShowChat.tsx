@@ -7,6 +7,7 @@ import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import { MessengerContex } from "../context/MessegerContext";
 import TextMessage from "../Models/TextMessage";
 import MediaMessage from "../Models/MediaMessage";
+import GroupChat from "../Models/GroupChat";
 
 interface ChatProps {
     Chat: Chat;
@@ -23,6 +24,7 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
     const [Messages, setMessages] = useState<Message[]>([]);
     const [unreadCount, setUnreadCount] = useState<number>(Chat.unReaded);
     const [chatTopMessage, setChatTopMessage] = useState<Message | null>(Chat.topMessage || null);
+    const [chatName, setChatName] = useState<string | null>(ChatName || null);
 
     useEffect(() => {
         const initDb = async () => {
@@ -35,6 +37,8 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
         };
         initDb();
     }, []);
+
+    
 
     const selectChat = async (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
@@ -94,7 +98,7 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
                 <img className="chat-photo me-2" src={ChatPhoto} alt="Chat" />
     
                 <div className="d-flex flex-column text-start">
-                    <h3 className="chat-name m-0 text-light">{ChatName}</h3>
+                    <h3 className="chat-name m-0 text-light">{chatName}</h3>
                     {chatTopMessage && isTextMessage(chatTopMessage) && chatTopMessage.content && (
                         <h4 className="chat-name m-0 text-secondary">{chatTopMessage.content}</h4>
                     )}

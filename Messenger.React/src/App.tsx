@@ -13,10 +13,10 @@ import Chat from './Models/Chat';
 
 
 const App: React.FC = () => {
-  const { getUserId, login, logout, token, user, ChangeAvatar, ChangeUserName } = useAuth();
+  const { getUserId, login, logout, token, user, ChangeAvatar, ChangeUserName, selectedChat, setSelectedChat,ChangeChatName } = useAuth();
   const { message, chats, addNewMessage, addNewChat, initChats } = useMessage();
 
-  const { connection, setConnection, selectedChat, setSelectedChat } = useConnection();
+  const { connection, setConnection } = useConnection();
   const { openDb, addMessage} = useIndexedDBMessenger();
 
   const isAuthenticated = !!token;
@@ -69,7 +69,7 @@ const App: React.FC = () => {
 
                   const processingMessage = async () => {
                       await addMessage(message); // add in indexedDb   
-                      addNewMessage(message); // add in Cotext
+                      addNewMessage(message); // add in Context
                   };
 
                   processingMessage();
@@ -122,7 +122,8 @@ const App: React.FC = () => {
         setSelectedChat,
         isAuthenticated,
         ChangeAvatar,
-        ChangeUserName
+        ChangeUserName,
+        ChangeChatName
       }}
     >
       <MessengerContex.Provider

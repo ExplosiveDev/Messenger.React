@@ -2,6 +2,7 @@ import { useCallback, useState, useEffect, useId } from "react"
 import {secureLocalStorage} from "./secureLocalStorage.hook"
 import User from "../Models/User";
 import myFile from "../Models/File";
+import Chat from "../Models/Chat";
 
 
 const UserStorage = 'userData';
@@ -20,6 +21,7 @@ const initState:User = {
 export const useAuth = () => {
     const [token, setToken] = useState<string | null>();
     const [user, setUser] = useState<User | null>();
+    const [selectedChat, _setSelectedChat] = useState<Chat | null>(null);
     const {secretKey, saveEncryptedObject, getDecryptedObject} = secureLocalStorage() 
 
     const login = useCallback((jwtToken: string, user: User) => {
@@ -67,6 +69,25 @@ export const useAuth = () => {
         saveEncryptedObject(UserStorage, { user: updatedUser, token }, secretKey);
     }
 
+    const setSelectedChat = (chat : Chat) => {
+        if(chat != null){
+            _setSelectedChat(chat);
+            window.sessionStorage.setItem("selectedChatId", chat.id);
+        }
+    }
 
-    return {getUserId, getToken, login, logout, ChangeAvatar, ChangeUserName, token, user};
+    const ChangeChatName = (newChatName: string) => {
+        if (selectedChat) {
+            console.log('Before update:', selectedChat);
+            const updatedChat:Chat = { 
+                ...selectedChat, 
+                groupName: newChatName 
+            }; 
+            _setSelectedChat(updatedChat);
+            console.log('After update:', selectedChat);
+        }
+    };
+
+
+    return {getUserId, getToken, login, logout, ChangeAvatar, ChangeUserName, token, user, selectedChat, setSelectedChat,ChangeChatName};
 }
