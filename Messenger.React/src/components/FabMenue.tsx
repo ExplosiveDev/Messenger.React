@@ -1,22 +1,22 @@
-import { FC, MouseEvent, useContext, useEffect, useRef, useState } from "react";
+import { FC, MouseEvent, useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTimes, faUsers, faCommentDots, faBullhorn } from "@fortawesome/free-solid-svg-icons";
 import User from "../Models/User";
-import { AuthContext } from "../context/AuthContext";
 import { getContacts } from "../services/users";
+import CreateGroupChatRequest from "../Models/RequestModels/CreateGroupChatReques";
+import GroupChat from "../Models/GroupChat";
+import { createGroupChat } from "../services/chats";
+import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
+import { useAppDispatch, useAppSelector } from "../store/store";
+import { setSelectedChat } from "../store/features/selectedChatSlice";
+import { addChat } from "../store/features/chatSlice";
 
 import "../assets/styles/MainMenueStyles/FabMenue.css"
 import "../assets/styles/Modal.css"
 
-import CreateGroupChatRequest from "../Models/RequestModels/CreateGroupChatReques";
-import GroupChat from "../Models/GroupChat";
-import { createGroupChat } from "../services/chats";
-import { MessengerContex } from "../context/MessegerContext";
-import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
-
 const FabMenu: FC = () => {
-    const auth = useContext(AuthContext);
-    const messenger = useContext(MessengerContex);
+    const dispatch = useAppDispatch();
+    const token = useAppSelector(state => state.user).token;
 
     const { openDb, addGroupChat } = useIndexedDBMessenger()
     const [DbOpened, setDbOpened] = useState(false);
@@ -35,7 +35,6 @@ const FabMenu: FC = () => {
         const initChatsDb = async () => {
             try {
                 await openDb();
-                console.log("Messenger:openDb")
                 setDbOpened(true);
             } catch (error) {
                 console.error("Error opening IndexedDB:", error);
@@ -63,7 +62,7 @@ const FabMenu: FC = () => {
 
     const handleCreateGroup = async (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        const Contacts: User[] = await getContacts(auth.token!);
+        const Contacts: User[] = await getContacts(token);
         setIsOpen(false);
         setShowModal(true);
         setContacts(Contacts);
@@ -106,10 +105,10 @@ const FabMenu: FC = () => {
 
         // console.log(CreatGroupRequest);
         
-        const groupChat:GroupChat = await createGroupChat(auth.token!, CreatGroupRequest);
+        const groupChat:GroupChat = await createGroupChat(token, CreatGroupRequest);
         await addGroupChat(groupChat);
-        messenger.addNewChat(groupChat);
-        auth.setSelectedChat(groupChat);
+        dispatch(addChat({chat:groupChat}));
+        dispatch(setSelectedChat({chat:groupChat}));
         console.log(groupChat);
     }
 

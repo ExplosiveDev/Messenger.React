@@ -1,8 +1,7 @@
 import { faArrowLeft, faPlus, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AnimatePresence, motion } from "framer-motion";
-import { MouseEvent, ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
-import { AuthContext } from "../context/AuthContext";
+import { MouseEvent, ChangeEvent, FC, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import User from "../Models/User";
 import myFile from "../Models/File";
@@ -10,6 +9,8 @@ import { ChangeUserFields } from "../services/users";
 import "../assets/styles/EditProfile.css"
 import "../assets/styles/MainMenueStyles/Componets.css"
 import ChangePhotoModal from "./Modal/ChangePhotoModal";
+import { useAppDispatch, useAppSelector } from "../store/store";
+import { changeUserAvatar, changeUserName } from "../store/features/userSlice";
 
 interface SidebarEditProfileProps {
     User: User;
@@ -17,13 +18,15 @@ interface SidebarEditProfileProps {
 }
 
 const SidebarEditProfile: FC<SidebarEditProfileProps> = ({ User, onLeftEditProfileMode }) => {
+    const token = useAppSelector(state => state.user).token;
+    const dispatch = useAppDispatch();
+
     const [editedUserName, setEditedUserName] = useState(User.userName);
     const [image, setImage] = useState<File | null>(null);
     const [hover, setHover] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [showButtonSave, setShowButtonSave] = useState(false);
     const modalRef = useRef<HTMLDivElement>(null);
-    const auth = useContext(AuthContext);
 
     useEffect(() => {
         const handleClickOutside = (event: globalThis.MouseEvent) => {
@@ -67,12 +70,12 @@ const SidebarEditProfile: FC<SidebarEditProfileProps> = ({ User, onLeftEditProfi
                     {
                         headers: {
                             "Content-Type": "multipart/form-data",
-                            Authorization: `Bearer ${auth.token}`,
+                            Authorization: `Bearer ${token}`,
                         },
                     }
                 );
                 const avatar: myFile = response.data.activeAvatar;
-                auth.ChangeAvatar(avatar);
+                dispatch(changeUserAvatar({newAvatar:avatar}));
             };
             uploadAvatar();
         }
@@ -82,9 +85,8 @@ const SidebarEditProfile: FC<SidebarEditProfileProps> = ({ User, onLeftEditProfi
         e.preventDefault();
         if(editedUserName){
             const ChangeUserName = async () => {
-                const newUserName = await ChangeUserFields(auth.token!, editedUserName)
-                auth.ChangeUserName(newUserName);
-                
+                const newUserName:string = await ChangeUserFields(token!, editedUserName)
+                dispatch(changeUserName({newUserName:newUserName}));
             }
             ChangeUserName();
         }

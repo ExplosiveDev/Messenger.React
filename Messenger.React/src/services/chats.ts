@@ -52,7 +52,7 @@ export const globalChatSearchByName = async (token:string, searchChatName:string
         }
     });
 
-    console.log(response.data.privateChats);
+    // console.log(response.data.privateChats);
 
     return response.data;
 }

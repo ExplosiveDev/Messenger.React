@@ -1,5 +1,4 @@
 import { ChangeEvent, FC, MouseEvent, useContext, useEffect, useState } from "react";
-import { AuthContext } from "../context/AuthContext";
 import RenderMessages from "../components/RenderMessages";
 import { MessengerContex } from "../context/MessegerContext";
 import Chat from "../Models/Chat";
@@ -18,16 +17,20 @@ import '../assets/styles/bootstrap.min.css';
 import '../assets/styles/MainMenueStyles/MainMenue.css';
 import '../assets/styles/style.css';
 import SidebarEditProfile from "../components/SidebarEditProfile";
+import { useAppDispatch, useAppSelector } from "../store/store";
+import { addChats } from "../store/features/chatSlice";
 
 
 const Messenger: FC = () => {
-    const auth = useContext(AuthContext);
+    const selectedChat = useAppSelector(state => state.selectedChat).chat;
+    const {user, token} = useAppSelector(state => state.user);
+    const dispatch = useAppDispatch();
+
     const messenger = useContext(MessengerContex);
 
     const [searchChatName, setSearchChat] = useState("");
     const [debouncedTerm, setDebouncedTerm] = useState(searchChatName);
 
-    const [savedChats, setSavedChats] = useState<Chat[]>([]);
     const [searchedChats, setSearchedChats] = useState<Chat[]>([]);
 
     const [isGlobalSearch, setIsGlobalSearch] = useState(false);
@@ -58,13 +61,12 @@ const Messenger: FC = () => {
 
     useEffect(() => {
         if (!DbOpened) return;
-        getSavedChats(auth.token!).then((chats: ChatsCortage | null) => {
+        getSavedChats(token).then((chats: ChatsCortage | null) => {
             if (chats) {
                 addPrivateChats(chats.privateChats);
                 addGroupChats(chats.groupChats);
                 getChats().then((chats) => {
-                    setSavedChats(chats);
-                    messenger.initChats(chats);
+                    dispatch(addChats({chats:chats}))
                 });
             }
         });
@@ -90,7 +92,7 @@ const Messenger: FC = () => {
         if (!DbOpened) return;
         const processingMessage = async () => {
             if (await getChat(messenger.message?.chatId!) == null) {
-                const newChat = await getChatService(auth.token!, messenger.message?.chatId!);
+                const newChat = await getChatService(token, messenger.message?.chatId!);
                 await addChat(newChat);
                 messenger.addNewChat(newChat);
             }
@@ -104,14 +106,12 @@ const Messenger: FC = () => {
             try {
                 const chats: Chat[] = await getChatsByName(searchChatName);
                 if (chats.length > 0) {
-                    console.log("getChatsByName", chats);
                     setSearchedChats(chats);
                     setIsGlobalSearch(false);
                 }
                 else { //Глобальний пошук всіх приватних та групових чатів за назвою                    
-
                     setIsGlobalSearch(true);
-                    const data: searchedGlobalChats = await globalChatSearchByName(auth.token!, searchChatName);
+                    const data: searchedGlobalChats = await globalChatSearchByName(token, searchChatName);
                     const chats: Chat[] = [...data.privateChats, ...data.groupChats];
                     setSearchedChats(chats);
                 }
@@ -135,7 +135,11 @@ const Messenger: FC = () => {
                 setShowSavedChats(false)
         }
         else {
-            getChats().then(setSavedChats);
+            const GetChats = async () => {
+                const savedChats =await getChats();
+                dispatch(addChats({chats:savedChats}))
+            }
+            GetChats();
         }
     };
 
@@ -145,7 +149,7 @@ const Messenger: FC = () => {
         if (DbOpened) {
             try {
                 const chats = await getChats();
-                setSavedChats(chats);
+                dispatch(addChats({chats:chats}))
             } catch (error) {
                 console.error('Failed to fetch chats:', error);
             }
@@ -160,7 +164,6 @@ const Messenger: FC = () => {
         setShowProfile(true);
     }
 
-
     return (
         <div className="h-100 text-color-main-menu">
             <div className="row h-100">
@@ -172,7 +175,6 @@ const Messenger: FC = () => {
                         isGlobalSearch={isGlobalSearch}
                         searchChatName={searchChatName}
                         searchedChats={searchedChats}
-                        savedChats={savedChats}
                         handleSearchChange={handleSearchChange}
                         onProfileSelect={onProfileSelect}
                         handleLeftSearchMode={handleLeftSearchMode}
@@ -180,19 +182,19 @@ const Messenger: FC = () => {
                     </SidebarChats>
                 )}
 
-                {( (showProfile && !showEditProfile) && auth.user) && (
+                {( (showProfile && !showEditProfile) && user) && (
                     <SidebarProfile 
-                        User={auth.user} 
+                        User={user} 
                         handleLeftProfileMode={handleLeftSearchMode} 
                         handleEditProfileMode={() => setShowEditProfile(true)}
                         >
                     </SidebarProfile>
                 )}
 
-                {showEditProfile && auth.user && (
+                {showEditProfile && user && (
                     <SidebarEditProfile 
                         onLeftEditProfileMode={() => setShowEditProfile(false)}
-                        User={auth.user} 
+                        User={user} 
                     >
 
                     </SidebarEditProfile>
@@ -200,20 +202,19 @@ const Messenger: FC = () => {
 
 
                 <div className={`${showChatInfo ? "col-6" : "col-9"} chat ps-0 pe-0`}>
-                    {!!auth.selectedChat && auth.selectedChat!.id != undefined && (
+                    {!!selectedChat && selectedChat!.id != undefined && (
                         <>
-                            <ChatHeader selectedChat={auth.selectedChat} user={auth.user!} onOpenChatInfo={() => setShowChatInfo(true)} />
+                            <ChatHeader user={user!} onOpenChatInfo={() => setShowChatInfo(true)} />
 
-                            <RenderMessages key={auth.selectedChat.id} ChatId={auth.selectedChat.id} />
+                            <RenderMessages key={selectedChat.id} />
 
                             <MessageForm />
                         </>
                     )}
                 </div>
 
-                {(showChatInfo) && !!auth.selectedChat && auth.selectedChat!.id !== undefined && (
+                {(showChatInfo) && !!selectedChat && selectedChat!.id !== undefined && (
                     <ShowChatInfo
-                        selectedChat={auth.selectedChat}
                         onCloseChatInfo={() => setShowChatInfo(false)}
                     />
                 )}

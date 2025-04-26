@@ -1,26 +1,28 @@
-import React, {useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { HubConnectionBuilder } from '@microsoft/signalr';
 import { AuthContext } from './context/AuthContext';
 import MyRoutes from './pages/MyRoutes';
 import { useConnection } from './hooks/connection.hook';
-import { useAuth } from './hooks/auth.hook';
-import { MessengerContex } from './context/MessegerContext';
-import { useMessage } from './hooks/message.hook';
 import useIndexedDBMessenger from './hooks/indexedDbMessenger.hook';
 import messagesReadedPayload from './Models/ResponsModels/messagesReadedPayload';
 import Message from './Models/Message';
-import Chat from './Models/Chat';
+import { useAppDispatch, useAppSelector } from './store/store';
+import { initUserData } from './store/features/userSlice';
+import { useMessage } from './hooks/message.hook';
+import { MessengerContex } from './context/MessegerContext';
 
 
-const App: React.FC = () => {
-  const { getUserId, login, logout, token, user, ChangeAvatar, ChangeUserName, selectedChat, setSelectedChat,ChangeChatName } = useAuth();
-  const { message, chats, addNewMessage, addNewChat, initChats } = useMessage();
+const App: FC = () => {
+  const { message,addNewMessage} = useMessage();
+
+  const {user,token} = useAppSelector(state => state.user);
+  const dispatch = useAppDispatch();
+
 
   const { connection, setConnection } = useConnection();
-  const { openDb, addMessage} = useIndexedDBMessenger();
+  const { openDb, addMessage } = useIndexedDBMessenger();
 
-  const isAuthenticated = !!token;
-
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>()
   const [DbOpened, setDbOpened] = useState(false);
 
 
@@ -34,10 +36,12 @@ const App: React.FC = () => {
       }
     };
     initChatsDb();
-    setSelectedChat({} as Chat);
-    
+    dispatch(initUserData());
   }, []);
 
+  useEffect(() => {
+    setIsAuthenticated(token === '' ? false : true);
+  }, [user]);
 
   useEffect(() => {
     const connectToChat = async () => {
@@ -53,13 +57,12 @@ const App: React.FC = () => {
               if (DbOpened) {
                 if (message) {
                   const selectedChatId = window.sessionStorage.getItem("selectedChatId");
-                  const userId = getUserId();
-                  if (selectedChatId == message.chatId && userId != message.senderId) {
+                  if (selectedChatId == message.chatId && user.id != message.senderId) {
                     message.isReaded = true;
 
                     const messagesReadedPayload: messagesReadedPayload = {
                       chatId: selectedChatId,
-                      userId: userId,
+                      userId: user.id,
                       messegeIds: [message.id]
                     };
 
@@ -68,8 +71,8 @@ const App: React.FC = () => {
 
 
                   const processingMessage = async () => {
-                      await addMessage(message); // add in indexedDb   
-                      addNewMessage(message); // add in Context
+                    await addMessage(message); // add in indexedDb   
+                    addNewMessage(message); // add in Context
                   };
 
                   processingMessage();
@@ -108,33 +111,21 @@ const App: React.FC = () => {
         setConnection(null);
       }
     };
+
   }, [isAuthenticated, user, DbOpened]);
 
   return (
     <AuthContext.Provider
       value={{
-        selectedChat: selectedChat || null,
-        token: token || "",
-        user: user || null,
         connection: connection || null,
-        login,
-        logout,
-        setSelectedChat,
-        isAuthenticated,
-        ChangeAvatar,
-        ChangeUserName,
-        ChangeChatName
       }}
     >
       <MessengerContex.Provider
         value={{
           message: message || null,
-          chats: chats || null,
           addNewMessage: addNewMessage,
-          addNewChat: addNewChat,
-          initChats:initChats,
         }}>
-        <MyRoutes isAuthenticated={isAuthenticated} user={user!} />
+        <MyRoutes isAuthenticated={isAuthenticated!} />
       </MessengerContex.Provider>
     </AuthContext.Provider >
   );

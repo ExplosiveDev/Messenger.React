@@ -1,5 +1,5 @@
 import { HubConnection } from '@microsoft/signalr';
-import { useCallback, useEffect, useState } from 'react';
+import {useState} from 'react';
 export const useConnection = () => {
     const [connection, _setConnection] = useState<HubConnection | null>(null);
 

@@ -1,18 +1,19 @@
 import React, { ChangeEvent, FC, FormEvent, useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import UserLoginReques from "../Models/UserLoginReques";
+import UserLoginReques from "../Models/RequestModels/UserLoginRequest";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../assets/styles/Login.module.css";
+import { useAppDispatch } from "../store/store";
+import { login } from "../store/features/userSlice";
 
 const Login: FC = () => {
     const initState = {
         phone: '',
         password: '',
     };
-
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const auth = useContext(AuthContext);
     const [UserLogin, setUserLogin] = useState(initState);
     const [errors, setErrors] = useState({
         phone: ''
@@ -52,7 +53,7 @@ const Login: FC = () => {
             const response = await axios.post<UserLoginReques>('http://192.168.0.100:5187/Users/login', UserLogin);
             console.log("Login", response.data);
             const data = response.data;
-            auth.login(data.token, data.user);
+            dispatch(login({token:data.token, user:data.user}))
             setUserLogin(initState);
             navigate("/");
         } catch (error) {

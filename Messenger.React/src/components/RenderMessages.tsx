@@ -6,14 +6,12 @@ import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import { MessengerContex } from "../context/MessegerContext";
 import messagesReadedPayload from "../Models/ResponsModels/messagesReadedPayload";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAppSelector } from "../store/store";
 
+const RenderMessages: FC = () => {
+    const selectedChat = useAppSelector(state => state.selectedChat).chat!;
+    const user = useAppSelector(state => state.user).user;
 
-interface ChatProps {
-    ChatId: string;
-}
-
-
-const RenderMessages: FC<ChatProps> = ({ ChatId }) => {
     const auth = useContext(AuthContext);
     const messenger = useContext(MessengerContex);
     const { openDb, db, getMessagesByChatId, GetUnReadedMessagIds, SetReadedMessages, getChat } = useIndexedDBMessenger();
@@ -33,22 +31,21 @@ const RenderMessages: FC<ChatProps> = ({ ChatId }) => {
         };
         initDb();
 
-    }, [auth.selectedChat]);
+    }, []);
 
     useEffect(() => {
 
         async function markMessagesAsRead() {
             if (dbOpened) {
-                if (auth.selectedChat == null || await getChat(auth.selectedChat.id) == null) return;
+                if (selectedChat == null || await getChat(selectedChat.id) == null) return;
 
-                const unreadIds = await GetUnReadedMessagIds(auth.selectedChat!.id);
+                const unreadIds = await GetUnReadedMessagIds(selectedChat!.id);
 
                 if (unreadIds.length > 0) {
                     const messagesReadedPayload: messagesReadedPayload = {
-                        chatId: auth.selectedChat.id,
-                        userId: auth.user?.id!,
+                        chatId: selectedChat.id,
+                        userId: user?.id!,
                         messegeIds: unreadIds
-
                     };
 
                     await auth.connection!.invoke("MessagesReaded", messagesReadedPayload);
@@ -59,20 +56,20 @@ const RenderMessages: FC<ChatProps> = ({ ChatId }) => {
         }
 
         markMessagesAsRead();
-    }, [dbOpened, auth.selectedChat])
+    }, [dbOpened])
 
     useEffect(() => {
         const fetchMessages = async () => {
             if (!dbOpened || !db) return;
             try {
-                const msgs: Message[] = await getMessagesByChatId(ChatId);
+                const msgs: Message[] = await getMessagesByChatId(selectedChat.id);
                 if (msgs) setMessages(msgs);
             } catch (error) {
                 console.error("Error fetching messages:", error);
             }
         };
         fetchMessages();
-    }, [dbOpened, ChatId, messenger.message]);
+    }, [dbOpened, messenger.message]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -88,9 +85,9 @@ const RenderMessages: FC<ChatProps> = ({ ChatId }) => {
                     {messages.length > 0 && messages.map((message) => (
                         <motion.div
                             key={message.id}
-                            initial={{ x: message.senderId === auth.user?.id ? 50 : -50, opacity: 0 }}
+                            initial={{ x: message.senderId === user?.id ? 50 : -50, opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: message.senderId === auth.user?.id ? 50 : -50, opacity: 0 }}
+                            exit={{ x: message.senderId === user?.id ? 50 : -50, opacity: 0 }}
                             transition={{ duration: 0.1, ease: "easeOut" }}
                             layout
                         >

@@ -1,17 +1,14 @@
-import { FC, useEffect } from "react"
-import Shop from "./Messenger"
+import { FC } from "react"
 import { Navigate, Route, Routes } from "react-router-dom"
 import Login from "./Login"
 import Registration from "./Registration"
-import User from "../Models/User"
 import Messenger from "./Messenger"
 
 
 interface MyRoutesProps {
     isAuthenticated: Boolean;
-    user: User;
 }
-const MyRoutes: FC<MyRoutesProps> = ({ isAuthenticated, user }) => {
+const MyRoutes: FC<MyRoutesProps> = ({ isAuthenticated }) => {
 
     if (isAuthenticated) {
         return (

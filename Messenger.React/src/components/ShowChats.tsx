@@ -1,26 +1,26 @@
 import { FC, useContext, useEffect, useState } from "react";
-import { AuthContext } from "../context/AuthContext";
 import ShowChat from "./ShowChat";
 import PrivateChat from "../Models/PrivateChat";
 import GroupChat from "../Models/GroupChat";
 import Chat from "../Models/Chat";
-import { MessengerContex } from "../context/MessegerContext";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import { motion } from "framer-motion"; 
-
+import { useAppDispatch, useAppSelector } from "../store/store";
+import { AuthContext } from "../context/AuthContext";
+import { removeChat } from "../store/features/chatSlice";
 
 interface ChatsProps {
   Chats: Chat[];
 }
-
 const ShowChats: FC<ChatsProps> = ({ Chats }) => {
-  const { openDb, getChats } = useIndexedDBMessenger()
+  const [chats, setChats] = useState<Chat[]>([]);
+  const auth = useContext(AuthContext);
+  const { openDb, removeChat:removeChatDb } = useIndexedDBMessenger()
   const [dbOpened, setDbOpened] = useState(false);
 
-  const auth = useContext(AuthContext);
-  const messenger = useContext(MessengerContex);
+  const user = useAppSelector(state => state.user).user;
+  const dispatch = useAppDispatch();
 
-  const [chats, setChats] = useState<Chat[]>([]);
   
   useEffect(() => {
     const initDb = async () => {
@@ -35,11 +35,15 @@ const ShowChats: FC<ChatsProps> = ({ Chats }) => {
 
   },[])
 
+  useEffect (() => {
+    setChats(Chats);
+  },[Chats])
+
   useEffect(() => {
     if (!auth.connection) return;
     const handleRemovedChat = (chatId: string) => {
-      console.log("Received removed chat:", chatId);
-      setChats(prev => prev.filter(m => m.id !== chatId));
+      dispatch(removeChat({chatId:chatId}));
+      removeChatDb(chatId);
     };
   
     auth.connection.on("ReceiveRemovedChatId", handleRemovedChat);
@@ -47,20 +51,10 @@ const ShowChats: FC<ChatsProps> = ({ Chats }) => {
     return () => {
       auth.connection?.off("ReceiveRemovedChatId", handleRemovedChat);
     };
-  }, [auth.connection]);
+  }, [auth.connection, dbOpened]);
 
-  useEffect (() => {
-    setChats(Chats);
-  },[Chats])
 
-  useEffect ( () => {
-    if(!dbOpened) return;
-    const fetchChats = async () => {
-      const chats = await getChats();
-      setChats(chats);
-    };
-    fetchChats();
-  },[messenger.chats])
+
   
   const isPrivateChat = (chat: Chat): chat is PrivateChat => {
     return (chat as PrivateChat).user1 !== undefined && (chat as PrivateChat).user2 !== undefined;
@@ -82,7 +76,7 @@ const ShowChats: FC<ChatsProps> = ({ Chats }) => {
         if (isPrivateChat(chat)) {
           const user1 = chat.user1;
           const user2 = chat.user2;
-          const chatUser = user1.id === auth.user?.id ? user2 : user1;
+          const chatUser = user1.id === user?.id ? user2 : user1;
 
           return (
             <motion.div

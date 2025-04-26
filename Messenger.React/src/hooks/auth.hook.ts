@@ -84,6 +84,7 @@ export const useAuth = () => {
                 groupName: newChatName 
             }; 
             _setSelectedChat(updatedChat);
+            
             console.log('After update:', selectedChat);
         }
     };

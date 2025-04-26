@@ -1,15 +1,17 @@
 import { FC, useState, useRef, useEffect, useCallback, useContext } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEllipsisV, faSignOutAlt, faUser } from "@fortawesome/free-solid-svg-icons";
-import { AuthContext } from "../context/AuthContext";
-import "../assets/styles/MainMenueStyles/Menue.css"
+import "../assets/styles/MainMenueStyles/Menue.css" 
+import { useAppSelector, useAppDispatch } from "../store/store";
+import { logout } from "../store/features/userSlice";
 
 interface ChatMenuProps {
     onProfileSelect: () => void;
 }
 
 const ChatMenu: FC<ChatMenuProps> = ({ onProfileSelect }) => {
-    const auth = useContext(AuthContext);
+    const User = useAppSelector(state => state.user);
+    const dispatch = useAppDispatch();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -60,7 +62,7 @@ const ChatMenu: FC<ChatMenuProps> = ({ onProfileSelect }) => {
 
 
     const handleExit = async () => {
-        auth.logout();
+        dispatch(logout());
     };
 
     const handleProfileClick = (e: React.MouseEvent<HTMLElement>) => {
@@ -88,7 +90,7 @@ const ChatMenu: FC<ChatMenuProps> = ({ onProfileSelect }) => {
                     <div className="profile-menu">
                         <button onClick={handleProfileClick}>
                             <FontAwesomeIcon icon={faUser} className="me-2" />
-                            {auth.user?.userName}
+                            {User.user?.userName}
                         </button>
                         <button onClick={handleExit}>
                             <FontAwesomeIcon icon={faSignOutAlt} className="me-2" />

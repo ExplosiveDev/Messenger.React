@@ -1,21 +1,21 @@
-import { FC, useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
+import { FC } from "react";
 import Message from "../Models/Message";
 import { format, parse } from "date-fns";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import UserChat from "../Models/UserChat";
+import { useAppSelector } from "../store/store";
 
 interface MessageProps {
     Message: Message;
 }
 
 const ShowMessage: FC<MessageProps> = ({ Message }) => {
-    const auth = useContext(AuthContext);
+    const selectedChat = useAppSelector(state => state.selectedChat).chat!;
+    const user = useAppSelector(state => state.user).user;
 
     const { isTextMessage, isMediaMessage, isGroupChat } = useIndexedDBMessenger();
 
-    const isMyMessage = auth.user?.id === Message.senderId;
-
+    const isMyMessage = user?.id === Message.senderId;
 
     let formattedDate = "Invalid Date";
     if (Message.timestamp) {
@@ -25,8 +25,8 @@ const ShowMessage: FC<MessageProps> = ({ Message }) => {
 
     let senderName = "";
     let senderAvatarUrl = "";
-    if (isGroupChat(auth.selectedChat!) && auth.selectedChat?.userChats) {
-        const senderUserChat = auth.selectedChat.userChats.find(
+    if (isGroupChat(selectedChat) && selectedChat?.userChats) {
+        const senderUserChat = selectedChat.userChats.find(
             (userChat: UserChat) => userChat.userId === Message.senderId
         );
         senderName = senderUserChat?.user?.userName || "Unknown";
@@ -35,13 +35,13 @@ const ShowMessage: FC<MessageProps> = ({ Message }) => {
 
     return (
         <div className={`col-12 d-flex ${isMyMessage ? "justify-content-end" : "justify-content-start"} align-items-end`}>
-            {!isMyMessage && isGroupChat(auth.selectedChat!) && (
+            {!isMyMessage && isGroupChat(selectedChat!) && (
                 <img src={senderAvatarUrl} alt="avatar" className="avatar-mini mb-1" />
             )}
 
             <div className={`message-box mt-2 ${isMyMessage ? "my-message" : "other-message"}`}>
 
-                {isGroupChat(auth.selectedChat!) && !isMyMessage && (
+                {isGroupChat(selectedChat!) && !isMyMessage && (
                     <div className="sender-name">{senderName}</div>
                 )}
 

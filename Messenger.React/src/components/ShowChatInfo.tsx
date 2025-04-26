@@ -15,13 +15,19 @@ import UserInfo from "./ChatInfo/UserInfo";
 import ChangePhotoModal from "./Modal/ChangePhotoModal";
 import { ChangeChatName } from "../services/chats";
 import ChangeChatNameRequest from "../Models/RequestModels/ChangeChatNameRequest";
+import { useAppDispatch, useAppSelector } from "../store/store";
+import { updateChatAvatarAndReturn } from "../store/features/chatService";
+import { setSelectedChat } from "../store/features/selectedChatSlice";
 
 interface ShowChatInfoProps {
-    selectedChat: Chat;
     onCloseChatInfo?: () => void;
 }
 
-const ShowChatInfo: FC<ShowChatInfoProps> = ({ selectedChat, onCloseChatInfo }) => {
+const ShowChatInfo: FC<ShowChatInfoProps> = ({onCloseChatInfo }) => {
+    const selectedChat = useAppSelector(state => state.selectedChat).chat!;
+        const dispatch = useAppDispatch();
+
+    const {user, token} = useAppSelector(state => state.user);
     const auth = useContext(AuthContext);
     const { isPrivateChat, isGroupChat } = useIndexedDBMessenger();
 
@@ -32,7 +38,7 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({ selectedChat, onCloseChatInfo }) 
     if (isPrivateChat(selectedChat)) {
         const user1 = selectedChat.user1;
         const user2 = selectedChat.user2;
-        const chatUser = user1.id === auth.user?.id ? user2 : user1;
+        const chatUser = user1.id === user?.id ? user2 : user1;
         isPrivateTypeChat = true;
         AvatarUrl = chatUser.activeAvatar.url ? chatUser.activeAvatar.url : "http://192.168.0.100:5187/uploads/user.png";
         ChatUser = chatUser;
@@ -91,12 +97,15 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({ selectedChat, onCloseChatInfo }) 
                     {
                         headers: {
                             "Content-Type": "multipart/form-data",
-                            Authorization: `Bearer ${auth.token}`,
+                            Authorization: `Bearer ${token}`,
                         },
                     }
                 );
                 const avatar: myFile = response.data.activeAvatar;
-                auth.ChangeAvatar(avatar);
+                const updatedChat:Chat | null = await dispatch(updateChatAvatarAndReturn(selectedChat.id,avatar));
+                if(updatedChat){
+                    dispatch(setSelectedChat({chat:updatedChat}))
+                }
             };
             uploadAvatar();
         }
@@ -119,19 +128,19 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({ selectedChat, onCloseChatInfo }) 
     const handleSaveChanges = async (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         if (editedChatName) {
-            const ChangeUserName = async () => {
+            const changeChatName = async () => {
 
                 const changeChatNameRequest: ChangeChatNameRequest = {
                     newName: editedChatName,
                     chatId: selectedChat.id
                 };
-                const newChatName = await ChangeChatName(auth.token!, changeChatNameRequest);
+                const newChatName = await ChangeChatName(token, changeChatNameRequest);
                 if (newChatName) {
                     auth.connection?.invoke("ChangeChatName", {chatId:selectedChat.id, newChatName:editedChatName});
                 }
 
             }
-            ChangeUserName();
+            changeChatName();
         }
     }
 
@@ -155,7 +164,7 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({ selectedChat, onCloseChatInfo }) 
                         <div className="col-8 d-flex  align-items-center px-0">
                             <h4 className="m-0 fw-bold">{isPrivateTypeChat ? "User info" : isEditMode ? "Edit Group info" : "Group info"} </h4>
                         </div>
-                        {!isPrivateTypeChat && !isEditMode && (selectedChat as GroupChat).adminId == auth.user!.id && (
+                        {!isPrivateTypeChat && !isEditMode && (selectedChat as GroupChat).adminId == user?.id && (
                             <div className="col-2 d-flex pe-0 justify-content-end">
                                 <button className="btn btn-secondary " type="button" id="edit" aria-expanded="false" onClick={handleOpenEditChat}>
                                     <FontAwesomeIcon icon={faEdit} />

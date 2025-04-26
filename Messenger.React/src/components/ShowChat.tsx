@@ -1,5 +1,4 @@
 import { FC, MouseEvent, useContext, useEffect, useState } from "react";
-import { AuthContext } from "../context/AuthContext";
 import Chat from "../Models/Chat";
 import Message from "../Models/Message";
 import { getMessagesByChatId } from "../services/messages";
@@ -7,7 +6,9 @@ import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import { MessengerContex } from "../context/MessegerContext";
 import TextMessage from "../Models/TextMessage";
 import MediaMessage from "../Models/MediaMessage";
-import GroupChat from "../Models/GroupChat";
+import { useAppDispatch, useAppSelector } from "../store/store";
+import { setSelectedChat } from "../store/features/selectedChatSlice";
+import { updateChat } from "../store/features/chatSlice";
 
 interface ChatProps {
     Chat: Chat;
@@ -16,15 +17,16 @@ interface ChatProps {
 }
 
 const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
-    const auth = useContext(AuthContext);
+    const dispatch = useAppDispatch()
+    const token = useAppSelector(state => state.user).token;
+
     const messenger = useContext(MessengerContex);
-    const { openDb, ChatMessagesUpdate, addMessages, GetCountOfUnReadedMessages, getChat, isTextMessage, isMediaMessage, addChat } = useIndexedDBMessenger();
+    const { openDb, ChatMessagesUpdate, addMessages, GetCountOfUnReadedMessages, getChat, isTextMessage, isMediaMessage } = useIndexedDBMessenger();
 
     const [dbOpened, setDbOpened] = useState(false);
     const [Messages, setMessages] = useState<Message[]>([]);
     const [unreadCount, setUnreadCount] = useState<number>(Chat.unReaded);
     const [chatTopMessage, setChatTopMessage] = useState<Message | null>(Chat.topMessage || null);
-    const [chatName, setChatName] = useState<string | null>(ChatName || null);
 
     useEffect(() => {
         const initDb = async () => {
@@ -38,36 +40,38 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
         initDb();
     }, []);
 
-    
+
+    const fetchMessages = async () => {
+        if (await getChat(Chat.id) == null) {
+            dispatch(setSelectedChat({chat:Chat}))
+            return;
+        }
+
+        try {
+            const messages = await getMessagesByChatId(token, Chat.id);
+            setMessages([...messages.textMessages, ...messages.mediaMessages as MediaMessage[]]);
+        } 
+        catch (error) {
+            console.error("Error fetching messages:", error);
+        }
+    };
 
     const selectChat = async (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        const fetchMessages = async () => {
-            if (await getChat(Chat.id) == null) {
-                auth.setSelectedChat(Chat);
-                return;
-            }
-
-            try {
-                const messages = await getMessagesByChatId(auth.token!, Chat.id);
-                setMessages([...messages.textMessages, ...messages.mediaMessages as MediaMessage[]]);
-            } catch (error) {
-                console.error("Error fetching messages:", error);
-            }
-        };
 
         if (!Chat.isMessagesUpdate) fetchMessages();
-        else auth.setSelectedChat(Chat);
+        else dispatch(setSelectedChat({chat:Chat}));
 
         if (unreadCount > 0) setUnreadCount(0);
     };
 
     useEffect(() => {
         if (dbOpened) {
-            Chat.isMessagesUpdate = true;
             addMessages(Messages).then(() => {
-                ChatMessagesUpdate(Chat);
-                auth.setSelectedChat(Chat);
+                const updatedChat = { ...Chat, isMessagesUpdate: true };
+                ChatMessagesUpdate(updatedChat);
+                dispatch(setSelectedChat({chat:updatedChat}));
+                dispatch(updateChat({chat:updatedChat}));
             });
         }
     }, [Messages]);
@@ -98,7 +102,7 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
                 <img className="chat-photo me-2" src={ChatPhoto} alt="Chat" />
     
                 <div className="d-flex flex-column text-start">
-                    <h3 className="chat-name m-0 text-light">{chatName}</h3>
+                    <h3 className="chat-name m-0 text-light">{ChatName}</h3>
                     {chatTopMessage && isTextMessage(chatTopMessage) && chatTopMessage.content && (
                         <h4 className="chat-name m-0 text-secondary">{chatTopMessage.content}</h4>
                     )}

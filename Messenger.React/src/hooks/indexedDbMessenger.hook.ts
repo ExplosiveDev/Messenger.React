@@ -1,19 +1,18 @@
-import { useContext, useEffect, useState } from "react";
+import { useState } from "react";
 import PrivateChat from "../Models/PrivateChat";
 import GroupChat from "../Models/GroupChat";
 import Message from "../Models/Message";
 import User from "../Models/User";
 import Chat from "../Models/Chat";
-import { AuthContext } from "../context/AuthContext";
 import { parse } from 'date-fns';
 import TextMessage from "../Models/TextMessage";
 import MediaMessage from "../Models/MediaMessage";
 import UserChat from "../Models/UserChat";
+import { useAppSelector } from "../store/store";
 
 function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1) {
   const [db, setDb] = useState<IDBDatabase | null>(null);
-  const auth = useContext(AuthContext);
-
+  const {user,token} = useAppSelector(state => state.user);
 
   const storeNames = {
     TextMessages: "TextMessages",
@@ -28,17 +27,6 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
 
   const isGroupChat = (chat: Chat): chat is GroupChat => {
     return (chat as GroupChat).groupName !== undefined;
-  };
-
-  const isChat = (data: any): data is Chat => {
-    if (typeof data !== "object" || data === null) return false;
-
-    return (
-      "id" in data &&
-      Array.isArray(data.messages) &&
-      Array.isArray(data.userChats) &&
-      typeof data.isMessagesUpdate === "boolean"
-    );
   };
 
   const isTextMessage = (message: Message): message is TextMessage => {
@@ -60,8 +48,7 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
 
         Object.values(storeNames).forEach((storeName) => {
           if (!db.objectStoreNames.contains(storeName)) {
-            const store = db.createObjectStore(storeName, { keyPath: "id" });
-            // if (storeName == storeNames.Messages) store.createIndex('timestamp', 'timestamp', { unique: false });
+            db.createObjectStore(storeName, { keyPath: "id" });
             console.log(`Object store "${storeName}" created.`);
           }
         });
@@ -70,7 +57,7 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
       request.onsuccess = () => {
         const database = request.result;
         setDb(database);
-        console.log("IndexedMessengerDB opened successfully.");
+        // console.log("IndexedMessengerDB opened successfully.");
         resolve(database);
       };
 
@@ -90,7 +77,7 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
       }
       
       if (storeName == storeNames.TextMessages || storeName == storeNames.MediaMessages)
-        SetLastMessageToChat(data.chatId, data as Message);
+        SetLastMessageToChat((data as Message).chatId, data as Message);
 
 
       const transaction = db.transaction(storeName, "readwrite");
@@ -136,6 +123,22 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
       const request = store.get(id);
 
       request.onsuccess = () => resolve(request.result as T);
+      request.onerror = () => reject(request.error);
+    });
+  };
+
+  const removeItem = (storeName: string, id: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (!db) {
+        reject("Database is not initialized");
+        return;
+      }
+  
+      const transaction = db.transaction(storeName, "readwrite");
+      const store = transaction.objectStore(storeName);
+      const request = store.delete(id);
+  
+      request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
   };
@@ -189,7 +192,7 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
       if (isPrivateChat(chat)) {
         const user1Name = chat.user1?.userName?.toLowerCase() || "unknown user";
         const user2Name = chat.user2?.userName?.toLowerCase() || "unknown user";
-        const currentUserName = auth.user?.userName?.toLowerCase() || "";
+        const currentUserName = user?.userName?.toLowerCase() || "";
         const chatName = user1Name === currentUserName ? user2Name : user1Name;
         return chatName.includes(normalizedName);
       }
@@ -226,14 +229,14 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
     const allMessages: Message[] = await getMessages();
     const messages = allMessages.filter((message: Message) => message.chatId === chatId);
     let unReaded: number = 0;
-    messages.forEach((msg) => { if (!msg.isReaded && msg.senderId != auth.user?.id) unReaded++; })
+    messages.forEach((msg) => { if (!msg.isReaded && msg.senderId != user?.id) unReaded++; })
     return unReaded;
   }
 
   const GetUnReadedMessagIds = async (chatId: string): Promise<string[]> => {
     const allMessages: Message[] = await getMessages();
     return allMessages
-      .filter(msg => msg.chatId === chatId && !msg.isReaded && msg.senderId !== auth.user?.id)
+      .filter(msg => msg.chatId === chatId && !msg.isReaded && msg.senderId !== user?.id)
       .map(msg => msg.id);
   }
 
@@ -301,18 +304,28 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
     }
   }
 
+  const removeChat = async (chatId:string) =>{
+    const chat = await getChat(chatId);
+    if(chat){
+      if(isPrivateChat(chat)) removeItem(storeNames.PrivateChats, chat.id);
+      if(isGroupChat(chat)) removeItem(storeNames.GroupChats, chat.id);
+    }
+  }
+
 
   return {
     openDb,
     // Private Chats
     addPrivateChat: (data: PrivateChat) => addItem(storeNames.PrivateChats, data),
     addPrivateChats: (data: PrivateChat[]) => addItems(storeNames.PrivateChats, data),
+    removePrivateChat:(id:string) => removeItem(storeNames.PrivateChats, id),
     getPrivateChat: (id: string) => getItem<PrivateChat>(storeNames.PrivateChats, id),
     getPrivateChats: () => getItems<PrivateChat>(storeNames.PrivateChats),
 
     // Group Chats
     addGroupChat: (data: GroupChat) => addItem(storeNames.GroupChats, data),
     addGroupChats: (data: GroupChat[]) => addItems(storeNames.GroupChats, data),
+    removeGroupChat:(id:string) => removeItem(storeNames.GroupChats, id),
     getGroupChat: (id: string) => getItem<GroupChat>(storeNames.GroupChats, id),
     getGroupChats: () => getItems<GroupChat>(storeNames.GroupChats),
 
@@ -330,7 +343,7 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
 
     db,
 
-    getChat, getChats, getChatsByName, ChatMessagesUpdate, addChat, removeMember,
+    getChat, getChats, getChatsByName, ChatMessagesUpdate, addChat, removeChat, removeMember,
     isPrivateChat, isGroupChat, isTextMessage, isMediaMessage, addMessage,
     getMessagesByChatId, GetCountOfUnReadedMessages, GetUnReadedMessagIds, SetReadedMessages, addMessages
 

@@ -1,17 +1,22 @@
 import { FC, useContext, useEffect, useState } from "react";
-import Chat from "../Models/Chat";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import User from "../Models/User";
 import GroupChat from "../Models/GroupChat";
 import { AuthContext } from "../context/AuthContext";
+import { useAppDispatch, useAppSelector } from "../store/store";
+import { updateChatNameAndReturn } from "../store/features/chatService";
+import { setSelectedChat } from "../store/features/selectedChatSlice";
+import Chat from "../Models/Chat";
 
 interface ChatHeaderProps{
-    selectedChat:Chat;
     user:User
     onOpenChatInfo?: () => void;
 }
 
-const ChatHeader: FC<ChatHeaderProps> = ({selectedChat, user, onOpenChatInfo}) => {
+const ChatHeader: FC<ChatHeaderProps> = ({user, onOpenChatInfo}) => {
+    const selectedChat = useAppSelector(state => state.selectedChat).chat!;
+    const dispatch = useAppDispatch();
+    
     const auth = useContext(AuthContext);
     const [chatName, setChatName] = useState<string>();
     const handleOpenChatInformation = () => onOpenChatInfo?.();
@@ -20,17 +25,17 @@ const ChatHeader: FC<ChatHeaderProps> = ({selectedChat, user, onOpenChatInfo}) =
 
     useEffect(() => {
         if (!auth.connection) return;
-        const handleRemovedChat = (chatId: string, newChatName:string) => {
-            if (selectedChat.id === chatId){
-                setChatName(newChatName);
-                auth.ChangeChatName(newChatName);
+        const handleRenameChatName = async (chatId: string, newChatName:string) => {
+            const updatedChat:Chat | null = await dispatch(updateChatNameAndReturn(chatId, newChatName));
+            if(updatedChat){
+                dispatch(setSelectedChat({chat:updatedChat}))
             }
         };
       
-        auth.connection.on("ReceiveNewChatName", handleRemovedChat);
+        auth.connection.on("ReceiveNewChatName", handleRenameChatName);
       
         return () => {
-          auth.connection?.off("ReceiveNewChatName", handleRemovedChat);
+          auth.connection?.off("ReceiveNewChatName", handleRenameChatName);
         };
       }, [auth.connection]);
     
@@ -41,7 +46,7 @@ const ChatHeader: FC<ChatHeaderProps> = ({selectedChat, user, onOpenChatInfo}) =
             const chatUser = user1.id === user?.id ? user2 : user1;
             setChatName(chatUser.userName);
         } else if (isGroupChat(selectedChat)) {
-            setChatName(auth.selectedChat!.groupName);
+            setChatName(selectedChat.groupName);
         } else {
             setChatName("Unknown Chat");
         }

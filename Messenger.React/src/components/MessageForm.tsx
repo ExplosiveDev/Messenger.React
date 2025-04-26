@@ -1,6 +1,5 @@
 import { ChangeEvent, FC, FormEvent, useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { MessengerContex } from "../context/MessegerContext";
 import {createPrivateChat } from "../services/chats";
 import FilePicker from "./FilePicker";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
@@ -10,12 +9,18 @@ import TextMessage from "../Models/TextMessage";
 import SendMediaMessageRequest from "../Models/RequestModels/SendMediaMessageRequest";
 import MediaMessage from "../Models/MediaMessage";
 import {SendTextMessage,SendMediaMessage } from "../services/messages";
+import { useAppDispatch, useAppSelector } from "../store/store";
+import PrivateChat from "../Models/PrivateChat";
+import { setSelectedChat } from "../store/features/selectedChatSlice";
+import { addChat } from "../store/features/chatSlice";
 
 
 const MessageForm: FC = () => {
+    const selectedChat = useAppSelector(state => state.selectedChat).chat;
+    const token = useAppSelector(state => state.user).token;
+    const dispatch = useAppDispatch();
 
     const auth = useContext(AuthContext);
-    const messenger = useContext(MessengerContex);
     
     const { openDb, getChat, addPrivateChat } = useIndexedDBMessenger()
     const [DbOpened, setDbOpened] = useState(false);
@@ -45,21 +50,20 @@ const MessageForm: FC = () => {
         if (message == "") return;
         const sendTextMessageRequest: SendTextMessageRequest = {
             content: message,
-            chatId: auth.selectedChat!.id,
+            chatId: selectedChat!.id,
         };
 
         //Якщо чата не існує, створюєм новий чат з відповідним користувачем
-        if (await getChat(auth.selectedChat!.id) == null) {
-            const newChat = await createPrivateChat(auth.token!, auth.selectedChat?.user1Id);
+        if (await getChat(selectedChat!.id) == null) {
+            const newChat = await createPrivateChat(token, (selectedChat as PrivateChat).user1Id);
             await addPrivateChat(newChat);
-            messenger.addNewChat(newChat);
-            auth.setSelectedChat(newChat);
+            dispatch(addChat({chat:newChat}));
+            dispatch(setSelectedChat({chat:newChat}));
             sendTextMessageRequest.chatId = newChat.id;
         }
 
 
-        const textMessage:TextMessage | null = await SendTextMessage(auth.token!, sendTextMessageRequest);
-        console.log(textMessage);
+        const textMessage:TextMessage | null = await SendTextMessage(token, sendTextMessageRequest);
         if (textMessage) {
             auth.connection!.invoke("SendTextMessage", JSON.parse(JSON.stringify(textMessage)));
         }
@@ -77,22 +81,22 @@ const MessageForm: FC = () => {
                 const sendMediaMessageRequest: SendMediaMessageRequest = {
                     fileId: "",
                     caption: caption ? caption : "",
-                    chatId: auth.selectedChat!.id,
+                    chatId: selectedChat!.id,
                 };       
 
-                if (await getChat(auth.selectedChat!.id) == null) {
-                    const newChat = await createPrivateChat(auth.token!, auth.selectedChat?.user1Id);
+                if (await getChat(selectedChat!.id) == null) {
+                    const newChat = await createPrivateChat(token, (selectedChat as PrivateChat).user1Id);
                     await addPrivateChat(newChat);
-                    messenger.addNewChat(newChat);
-                    auth.setSelectedChat(newChat);
+                    dispatch(addChat({chat:newChat}));
+                    dispatch(setSelectedChat({chat:newChat}));
                     sendMediaMessageRequest.chatId = newChat.id;
                 }
 
                 const formData = new FormData();
                 formData.append("file", photo);
-                const filedId: string = await uploadMedia(auth.token!, formData);
+                const filedId: string = await uploadMedia(token, formData);
                 sendMediaMessageRequest.fileId = filedId;
-                const mediaMessage:MediaMessage | null = await SendMediaMessage(auth.token!, sendMediaMessageRequest);
+                const mediaMessage:MediaMessage | null = await SendMediaMessage(token, sendMediaMessageRequest);
                 if(mediaMessage){
                     auth.connection!.invoke("SendMediaMessage", mediaMessage);
                 }
