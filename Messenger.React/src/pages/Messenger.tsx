@@ -1,32 +1,38 @@
 import { ChangeEvent, FC, MouseEvent, useContext, useEffect, useState } from "react";
 import RenderMessages from "../components/RenderMessages";
-import { MessengerContex } from "../context/MessegerContext";
 import Chat from "../Models/Chat";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import ChatsCortage from "../Models/ResponsModels/ChatsCortage";
 import { getSavedChats, globalChatSearchByName } from "../services/chats";
-import { getChat as getChatService } from "../services/chats";
 import SidebarProfile from "../components/SidebarProfile";
 import searchedGlobalChats from "../Models/ResponsModels/SerchedGlobalChats";
 import MessageForm from "../components/MessageForm";
 import ChatHeader from "../components/ChatHeader";
 import ShowChatInfo from "../components/ShowChatInfo";
 import SidebarChats from "../components/SidebarChats";
-
+import SidebarEditProfile from "../components/SidebarEditProfile";
+import { useAppDispatch, useAppSelector } from "../store/store";
+import { addChat, addChats, changeCountOfUnreadedMessages, changeTopMessage } from "../store/features/chatSlice";
+import { getChatById } from "../store/features/chatService";
+import { AuthContext } from "../context/AuthContext";
+import Message from "../Models/Message";
+import { addMessage } from "../store/features/messageSlice";
+import messagesReadedPayload from "../Models/ResponsModels/messagesReadedPayload";
+import { getChat as getChatService } from "../services/chats";
 import '../assets/styles/bootstrap.min.css';
 import '../assets/styles/MainMenueStyles/MainMenue.css';
 import '../assets/styles/style.css';
-import SidebarEditProfile from "../components/SidebarEditProfile";
-import { useAppDispatch, useAppSelector } from "../store/store";
-import { addChats } from "../store/features/chatSlice";
 
 
 const Messenger: FC = () => {
-    const selectedChat = useAppSelector(state => state.selectedChat).chat;
-    const {user, token} = useAppSelector(state => state.user);
+    const selectedChatId = useAppSelector(state => state.selectedChat).chatId;
+    const selectedChat = useAppSelector(state => getChatById(selectedChatId!)(() => state));
+
+    const { user, token } = useAppSelector(state => state.user);
     const dispatch = useAppDispatch();
 
-    const messenger = useContext(MessengerContex);
+    const auth = useContext(AuthContext);
+
 
     const [searchChatName, setSearchChat] = useState("");
     const [debouncedTerm, setDebouncedTerm] = useState(searchChatName);
@@ -42,7 +48,7 @@ const Messenger: FC = () => {
 
     const [showChatInfo, setShowChatInfo] = useState(false);
 
-    const { openDb, getChats, getChatsByName, getChat, addPrivateChats, addGroupChats, addChat } = useIndexedDBMessenger()
+    const { openDb, getChats, getChatsByName, getChat, addPrivateChats, addGroupChats, addChat: addChatDb, GetCountOfUnReadedMessages: GetCountOfUnReadedMessagesDB, addMessage: addMessageDB } = useIndexedDBMessenger()
 
     const [DbOpened, setDbOpened] = useState(false);
 
@@ -66,12 +72,67 @@ const Messenger: FC = () => {
                 addPrivateChats(chats.privateChats);
                 addGroupChats(chats.groupChats);
                 getChats().then((chats) => {
-                    dispatch(addChats({chats:chats}))
+                    dispatch(addChats({ chats: chats }))
                 });
             }
         });
 
     }, [DbOpened])
+
+    useEffect(() => {
+        if (!auth.connection) return;
+        const handleReceiveMessage = async (message: Message, status: number) => {
+            if (status == 200) {
+                console.log(message);
+                if (DbOpened) {
+                    if (message && user) {
+                        const selectedChatId = window.sessionStorage.getItem("selectedChatId");
+                        if (selectedChatId == message.chatId && user.id != message.senderId) {
+                            message.isReaded = true;
+                            const messagesReadedPayload: messagesReadedPayload = {
+                                chatId: selectedChatId,
+                                userId: user.id,
+                                messegeIds: [message.id]
+                            };
+                            if (auth.connection)
+                                auth.connection.invoke("MessagesReaded", messagesReadedPayload);
+                        }
+                        if (await getChat(message.id) == null) {
+                            const newChat = await getChatService(token, message.chatId);
+                            dispatch(addChat({ chat: newChat }));
+                            await addChatDb(newChat);
+                        }
+                        const processingMessage = async () => {
+                            await addMessageDB(message);
+                            if (message.chatId === selectedChatId) {
+                                dispatch(addMessage({ message: message }));
+                            }
+                        };
+                        processingMessage();
+
+                        const addToChatTopMessage = async () => {
+                            dispatch(changeTopMessage({ chatId: message.chatId, newTopMessage: message }));
+                        };
+                        addToChatTopMessage();
+
+                        const GetCountOfUnReadedMessages = async () => {
+                            const unReaded: number = await GetCountOfUnReadedMessagesDB(message.chatId);
+                            dispatch(changeCountOfUnreadedMessages({ chatId: message.chatId, count: unReaded }))
+
+                        };
+                        GetCountOfUnReadedMessages();
+                    }
+                }
+
+            }
+        };
+
+        auth.connection.on("ReceiveMessage", handleReceiveMessage);
+
+        return () => {
+            auth.connection?.off("ReceiveNewChatName", handleReceiveMessage);
+        };
+    }, [auth.connection, DbOpened]);
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -88,20 +149,20 @@ const Messenger: FC = () => {
         };
     }, [searchChatName]);
 
+    // useEffect(() => {
+    //     if (!DbOpened) return;
+    //     const processingMessage = async () => {
+    //         if (await getChat(messenger.message?.chatId!) == null) {
+    //             const newChat = await getChatService(token, messenger.message?.chatId!);
+    //             dispatch(addChat({chat:newChat}));
+    //             await addChatDb(newChat);
+    //         }
+    //     };
+
+    //     processingMessage();
+    // }, [messenger.message])
+
     useEffect(() => {
-        if (!DbOpened) return;
-        const processingMessage = async () => {
-            if (await getChat(messenger.message?.chatId!) == null) {
-                const newChat = await getChatService(token, messenger.message?.chatId!);
-                await addChat(newChat);
-                messenger.addNewChat(newChat);
-            }
-        };
-
-        processingMessage();
-    }, [messenger.message])
-
-    useEffect( () => {
         const searchChats = async () => {
             try {
                 const chats: Chat[] = await getChatsByName(searchChatName);
@@ -136,8 +197,8 @@ const Messenger: FC = () => {
         }
         else {
             const GetChats = async () => {
-                const savedChats =await getChats();
-                dispatch(addChats({chats:savedChats}))
+                const savedChats = await getChats();
+                dispatch(addChats({ chats: savedChats }))
             }
             GetChats();
         }
@@ -149,7 +210,7 @@ const Messenger: FC = () => {
         if (DbOpened) {
             try {
                 const chats = await getChats();
-                dispatch(addChats({chats:chats}))
+                dispatch(addChats({ chats: chats }))
             } catch (error) {
                 console.error('Failed to fetch chats:', error);
             }
@@ -169,32 +230,30 @@ const Messenger: FC = () => {
             <div className="row h-100">
 
                 {(showSavedChats || showSearchedChats) && (
-                    <SidebarChats 
-                        showSavedChats={showSavedChats} 
-                        showSearchedChats={showSearchedChats} 
+                    <SidebarChats
+                        showSavedChats={showSavedChats}
+                        showSearchedChats={showSearchedChats}
                         isGlobalSearch={isGlobalSearch}
                         searchChatName={searchChatName}
                         searchedChats={searchedChats}
                         handleSearchChange={handleSearchChange}
                         onProfileSelect={onProfileSelect}
                         handleLeftSearchMode={handleLeftSearchMode}
-                        >
+                    >
                     </SidebarChats>
                 )}
 
-                {( (showProfile && !showEditProfile) && user) && (
-                    <SidebarProfile 
-                        User={user} 
-                        handleLeftProfileMode={handleLeftSearchMode} 
+                {((showProfile && !showEditProfile) && user) && (
+                    <SidebarProfile
+                        handleLeftProfileMode={handleLeftSearchMode}
                         handleEditProfileMode={() => setShowEditProfile(true)}
-                        >
+                    >
                     </SidebarProfile>
                 )}
 
                 {showEditProfile && user && (
-                    <SidebarEditProfile 
+                    <SidebarEditProfile
                         onLeftEditProfileMode={() => setShowEditProfile(false)}
-                        User={user} 
                     >
 
                     </SidebarEditProfile>

@@ -1,7 +1,5 @@
 import { FC, useContext, useEffect, useState } from "react";
 import ShowChat from "./ShowChat";
-import PrivateChat from "../Models/PrivateChat";
-import GroupChat from "../Models/GroupChat";
 import Chat from "../Models/Chat";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import { motion } from "framer-motion"; 
@@ -15,7 +13,7 @@ interface ChatsProps {
 const ShowChats: FC<ChatsProps> = ({ Chats }) => {
   const [chats, setChats] = useState<Chat[]>([]);
   const auth = useContext(AuthContext);
-  const { openDb, removeChat:removeChatDb } = useIndexedDBMessenger()
+  const { openDb, removeChat:removeChatDb, isGroupChat, isPrivateChat } = useIndexedDBMessenger()
   const [dbOpened, setDbOpened] = useState(false);
 
   const user = useAppSelector(state => state.user).user;
@@ -52,19 +50,6 @@ const ShowChats: FC<ChatsProps> = ({ Chats }) => {
       auth.connection?.off("ReceiveRemovedChatId", handleRemovedChat);
     };
   }, [auth.connection, dbOpened]);
-
-
-
-  
-  const isPrivateChat = (chat: Chat): chat is PrivateChat => {
-    return (chat as PrivateChat).user1 !== undefined && (chat as PrivateChat).user2 !== undefined;
-  };
-
-  const isGroupChat = (chat: Chat): chat is GroupChat => {
-    return (chat as GroupChat).groupName !== undefined;
-  };            
-
-
 
 
   return (

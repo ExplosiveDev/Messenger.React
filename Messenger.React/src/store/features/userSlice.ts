@@ -42,11 +42,13 @@ export const UserSlice = createSlice({
         changeUserName:(state, action:PayloadAction<{newUserName: string}>) => {
             if (state.user) {
                 state.user.userName = action.payload.newUserName;
+                saveEncryptedObject(UserStorage, { user: state.user, token: state.token }, secretKey);
             }
         },
         changeUserAvatar:(state, action:PayloadAction<{newAvatar: myFile}>) => {
             if (state.user) {
                 state.user.activeAvatar = action.payload.newAvatar;
+                saveEncryptedObject(UserStorage, { user: state.user, token: state.token }, secretKey);
             }
         }
     }

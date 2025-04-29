@@ -13,11 +13,11 @@ import { useAppDispatch, useAppSelector } from "../store/store";
 import { changeUserAvatar, changeUserName } from "../store/features/userSlice";
 
 interface SidebarEditProfileProps {
-    User: User;
     onLeftEditProfileMode: () => void;
 }
 
-const SidebarEditProfile: FC<SidebarEditProfileProps> = ({ User, onLeftEditProfileMode }) => {
+const SidebarEditProfile: FC<SidebarEditProfileProps> = ({ onLeftEditProfileMode }) => {
+    const User = useAppSelector(state => state.user).user!;
     const token = useAppSelector(state => state.user).token;
     const dispatch = useAppDispatch();
 

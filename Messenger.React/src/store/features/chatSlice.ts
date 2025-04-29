@@ -2,6 +2,9 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import Chat from '../../Models/Chat';
 import GroupChat from '../../Models/GroupChat';
 import myFile from '../../Models/File';
+import Message from '../../Models/Message';
+import TextMessage from '../../Models/TextMessage';
+import MediaMessage from '../../Models/MediaMessage';
 
 export interface ChatsState {
     chats: Chat[];
@@ -11,6 +14,14 @@ const initialState: ChatsState = {
 }
 function isGroupChat(chat: Chat): chat is GroupChat {
     return (chat as GroupChat).groupName !== undefined;
+}
+
+function isTextMessage(message: Message): message is TextMessage {
+    return (message as TextMessage).content !== undefined && (message as MediaMessage).mediaType === undefined;
+}
+
+function isMediaMessage(message: Message): message is MediaMessage {
+  return (message as MediaMessage).mediaType !== undefined && (message as MediaMessage).caption !== undefined;
 }
 
 export const ChatSlice = createSlice({
@@ -53,10 +64,38 @@ export const ChatSlice = createSlice({
                     chat.activeIcon = newChatAvatar;
                 }
             }
-        }  
+        },
+        changeTopMessage:(state, action: PayloadAction<{chatId: string, newTopMessage: Message }>) => {
+            const { chatId, newTopMessage } = action.payload;
+            const chatIndex = state.chats.findIndex(chat => chat.id === chatId);
+            if (chatIndex !== -1) {
+                const chat = state.chats[chatIndex];
+                if(isTextMessage(newTopMessage)) chat.topMessage = newTopMessage;
+                if(isMediaMessage(newTopMessage)) chat.topMessage = newTopMessage;
+            }
+        },
+        changeIsMessagesUpdate:(state, action: PayloadAction<{chatId: string, newIsMessagesUpdate: boolean }>) => {
+            const { chatId, newIsMessagesUpdate } = action.payload;
+            const chatIndex = state.chats.findIndex(chat => chat.id === chatId);
+            if (chatIndex !== -1) {
+                const chat = state.chats[chatIndex];
+                chat.isMessagesUpdate = newIsMessagesUpdate;
+            }
+        },
+        changeCountOfUnreadedMessages:(state, action: PayloadAction<{chatId: string, count: number }>) => {
+            const { chatId, count } = action.payload;
+            const chatIndex = state.chats.findIndex(chat => chat.id === chatId);
+            if (chatIndex !== -1) {
+                const chat = state.chats[chatIndex];
+                chat.unReaded = count;
+            }
+        }
     }
 })
 
 export default ChatSlice.reducer;
 
-export const { addChat, removeChat, addChats, updateChat, changeChatName, changeChatAvatar } = ChatSlice.actions;
+export const { 
+    addChat, removeChat, addChats, updateChat, 
+    changeChatName, changeChatAvatar, changeTopMessage, changeIsMessagesUpdate, changeCountOfUnreadedMessages 
+    } = ChatSlice.actions;

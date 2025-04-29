@@ -13,12 +13,14 @@ import { useAppDispatch, useAppSelector } from "../store/store";
 import PrivateChat from "../Models/PrivateChat";
 import { setSelectedChat } from "../store/features/selectedChatSlice";
 import { addChat } from "../store/features/chatSlice";
+import { getChatById } from "../store/features/chatService";
 
 
 const MessageForm: FC = () => {
-    const selectedChat = useAppSelector(state => state.selectedChat).chat;
-    const token = useAppSelector(state => state.user).token;
+    const selectedChatId = useAppSelector(state => state.selectedChat).chatId;
     const dispatch = useAppDispatch();
+    const selectedChat = useAppSelector(state => getChatById(selectedChatId!)(() => state));   
+    const token = useAppSelector(state => state.user).token;
 
     const auth = useContext(AuthContext);
     

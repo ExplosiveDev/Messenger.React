@@ -4,13 +4,15 @@ import { format, parse } from "date-fns";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import UserChat from "../Models/UserChat";
 import { useAppSelector } from "../store/store";
+import { getChatById } from "../store/features/chatService";
 
 interface MessageProps {
     Message: Message;
 }
 
 const ShowMessage: FC<MessageProps> = ({ Message }) => {
-    const selectedChat = useAppSelector(state => state.selectedChat).chat!;
+    const selectedChatId = useAppSelector(state => state.selectedChat).chatId;
+    const selectedChat = useAppSelector(state => getChatById(selectedChatId!)(() => state));   
     const user = useAppSelector(state => state.user).user;
 
     const { isTextMessage, isMediaMessage, isGroupChat } = useIndexedDBMessenger();
@@ -25,7 +27,7 @@ const ShowMessage: FC<MessageProps> = ({ Message }) => {
 
     let senderName = "";
     let senderAvatarUrl = "";
-    if (isGroupChat(selectedChat) && selectedChat?.userChats) {
+    if (selectedChat && isGroupChat(selectedChat) && selectedChat.userChats) {
         const senderUserChat = selectedChat.userChats.find(
             (userChat: UserChat) => userChat.userId === Message.senderId
         );

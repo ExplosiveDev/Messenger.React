@@ -1,14 +1,13 @@
-import { FC, MouseEvent, useContext, useEffect, useState } from "react";
+import { FC, MouseEvent, useEffect, useState } from "react";
 import Chat from "../Models/Chat";
 import Message from "../Models/Message";
 import { getMessagesByChatId } from "../services/messages";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
-import { MessengerContex } from "../context/MessegerContext";
-import TextMessage from "../Models/TextMessage";
 import MediaMessage from "../Models/MediaMessage";
 import { useAppDispatch, useAppSelector } from "../store/store";
 import { setSelectedChat } from "../store/features/selectedChatSlice";
-import { updateChat } from "../store/features/chatSlice";
+import { changeCountOfUnreadedMessages, changeIsMessagesUpdate} from "../store/features/chatSlice";
+import { setMessages } from "../store/features/messageSlice";
 
 interface ChatProps {
     Chat: Chat;
@@ -20,13 +19,9 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
     const dispatch = useAppDispatch()
     const token = useAppSelector(state => state.user).token;
 
-    const messenger = useContext(MessengerContex);
-    const { openDb, ChatMessagesUpdate, addMessages, GetCountOfUnReadedMessages, getChat, isTextMessage, isMediaMessage } = useIndexedDBMessenger();
+    const { openDb, ChatMessagesUpdate, addMessages, getMessagesByChatId:getMessagesByChatIdDB, isTextMessage, isMediaMessage } = useIndexedDBMessenger();
 
     const [dbOpened, setDbOpened] = useState(false);
-    const [Messages, setMessages] = useState<Message[]>([]);
-    const [unreadCount, setUnreadCount] = useState<number>(Chat.unReaded);
-    const [chatTopMessage, setChatTopMessage] = useState<Message | null>(Chat.topMessage || null);
 
     useEffect(() => {
         const initDb = async () => {
@@ -42,14 +37,15 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
 
 
     const fetchMessages = async () => {
-        if (await getChat(Chat.id) == null) {
-            dispatch(setSelectedChat({chat:Chat}))
-            return;
-        }
-
         try {
             const messages = await getMessagesByChatId(token, Chat.id);
-            setMessages([...messages.textMessages, ...messages.mediaMessages as MediaMessage[]]);
+            await addMessages([...messages.textMessages, ...messages.mediaMessages as MediaMessage[]]);
+
+            const msgs: Message[] = await getMessagesByChatIdDB(Chat.id);
+            dispatch(setMessages({messages:msgs}));
+
+            ChatMessagesUpdate({ ...Chat, isMessagesUpdate: true });
+            dispatch(changeIsMessagesUpdate({chatId:Chat.id, newIsMessagesUpdate:true}));
         } 
         catch (error) {
             console.error("Error fetching messages:", error);
@@ -59,42 +55,21 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
     const selectChat = async (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
 
-        if (!Chat.isMessagesUpdate) fetchMessages();
-        else dispatch(setSelectedChat({chat:Chat}));
+        dispatch(setSelectedChat({chat:Chat}));
 
-        if (unreadCount > 0) setUnreadCount(0);
+        if (!Chat.isMessagesUpdate) {
+            fetchMessages()
+        }
+        else {
+            const msgs: Message[] = await getMessagesByChatIdDB(Chat.id);
+            dispatch(setMessages({messages:msgs}));
+        }
+
+        if (Chat.unReaded > 0){
+            dispatch(changeCountOfUnreadedMessages({chatId:Chat.id, count: 0}))
+        }
     };
 
-    useEffect(() => {
-        if (dbOpened) {
-            addMessages(Messages).then(() => {
-                const updatedChat = { ...Chat, isMessagesUpdate: true };
-                ChatMessagesUpdate(updatedChat);
-                dispatch(setSelectedChat({chat:updatedChat}));
-                dispatch(updateChat({chat:updatedChat}));
-            });
-        }
-    }, [Messages]);
-
-    useEffect(() => {
-        if (!dbOpened) return;
-
-        const getCount = async () => {
-            const unReaded: number = await GetCountOfUnReadedMessages(Chat.id);
-            setUnreadCount(unReaded);
-        };
-        getCount();
-
-        if (Chat.id === messenger.message?.chatId) {
-            const getTopMessage = async () => {
-                const chat = await getChat(Chat.id);
-                if (chat?.topMessage) {
-                    setChatTopMessage(isTextMessage(chat.topMessage) ? chat.topMessage as TextMessage : chat.topMessage as MediaMessage);
-                }
-            };
-            getTopMessage();
-        }
-    }, [messenger.message]);
 
     return (
         <div className="col-12 my-1 px-2">
@@ -103,22 +78,22 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
     
                 <div className="d-flex flex-column text-start">
                     <h3 className="chat-name m-0 text-light">{ChatName}</h3>
-                    {chatTopMessage && isTextMessage(chatTopMessage) && chatTopMessage.content && (
-                        <h4 className="chat-name m-0 text-secondary">{chatTopMessage.content}</h4>
+                    {Chat.topMessage && isTextMessage(Chat.topMessage) && Chat.topMessage.content && (
+                        <h4 className="chat-name m-0 text-secondary">{Chat.topMessage.content}</h4>
                     )}
-                    {chatTopMessage && isMediaMessage(chatTopMessage) && chatTopMessage.content.length > 0 && (
+                    {Chat.topMessage && isMediaMessage(Chat.topMessage) && Chat.topMessage.content.length > 0 && (
                         <div className="d-flex flex-row align-items-center">
-                            <img className="top-message-img me-1" src={chatTopMessage.content[0]?.url || ""} alt="Media" />
+                            <img className="top-message-img me-1" src={Chat.topMessage.content[0]?.url || ""} alt="Media" />
                             <h4 className="chat-name m-0 text-secondary">
-                                {chatTopMessage.caption !== "" ? chatTopMessage.caption : chatTopMessage.content[0]?.fileName || "Файл"}
+                                {Chat.topMessage.caption !== "" ? Chat.topMessage.caption : Chat.topMessage.content[0]?.fileName || "Файл"}
                             </h4>
                         </div>
                     )}
                 </div>
     
-                {unreadCount > 0 && (
+                {Chat.unReaded > 0 && (
                     <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        {unreadCount}
+                        {Chat.unReaded}
                     </span>
                 )}
             </button>

@@ -3,39 +3,18 @@ import { HubConnectionBuilder } from '@microsoft/signalr';
 import { AuthContext } from './context/AuthContext';
 import MyRoutes from './pages/MyRoutes';
 import { useConnection } from './hooks/connection.hook';
-import useIndexedDBMessenger from './hooks/indexedDbMessenger.hook';
-import messagesReadedPayload from './Models/ResponsModels/messagesReadedPayload';
-import Message from './Models/Message';
 import { useAppDispatch, useAppSelector } from './store/store';
 import { initUserData } from './store/features/userSlice';
-import { useMessage } from './hooks/message.hook';
-import { MessengerContex } from './context/MessegerContext';
-
 
 const App: FC = () => {
-  const { message,addNewMessage} = useMessage();
-
-  const {user,token} = useAppSelector(state => state.user);
+  const { user, token } = useAppSelector(state => state.user);
   const dispatch = useAppDispatch();
 
-
   const { connection, setConnection } = useConnection();
-  const { openDb, addMessage } = useIndexedDBMessenger();
-
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>()
-  const [DbOpened, setDbOpened] = useState(false);
-
 
   useEffect(() => {
-    const initChatsDb = async () => {
-      try {
-        await openDb();
-        setDbOpened(true);
-      } catch (error) {
-        console.error("Error opening IndexedDB:", error);
-      }
-    };
-    initChatsDb();
+    window.sessionStorage.setItem("selectedChatId", "");
     dispatch(initUserData());
   }, []);
 
@@ -45,44 +24,12 @@ const App: FC = () => {
 
   useEffect(() => {
     const connectToChat = async () => {
-      if (user && DbOpened) {
+      if (user) {
         try {
           const newConnection = new HubConnectionBuilder()
             .withUrl("http://192.168.0.100:5187/chat")
             .withAutomaticReconnect()
             .build();
-
-          newConnection.on("ReceiveMessage", (message: Message, status: number) => {
-            if (status == 200) {
-              if (DbOpened) {
-                if (message) {
-                  const selectedChatId = window.sessionStorage.getItem("selectedChatId");
-                  if (selectedChatId == message.chatId && user.id != message.senderId) {
-                    message.isReaded = true;
-
-                    const messagesReadedPayload: messagesReadedPayload = {
-                      chatId: selectedChatId,
-                      userId: user.id,
-                      messegeIds: [message.id]
-                    };
-
-                    newConnection.invoke("MessagesReaded", messagesReadedPayload);
-                  }
-
-
-                  const processingMessage = async () => {
-                    await addMessage(message); // add in indexedDb   
-                    addNewMessage(message); // add in Context
-                  };
-
-                  processingMessage();
-
-
-                }
-              }
-
-            }
-          });
 
           newConnection.on("ReceiveReadedMessageIds", (ids: string[]) => {
             console.log("ids");
@@ -112,7 +59,7 @@ const App: FC = () => {
       }
     };
 
-  }, [isAuthenticated, user, DbOpened]);
+  }, [isAuthenticated, user]);
 
   return (
     <AuthContext.Provider
@@ -120,13 +67,7 @@ const App: FC = () => {
         connection: connection || null,
       }}
     >
-      <MessengerContex.Provider
-        value={{
-          message: message || null,
-          addNewMessage: addNewMessage,
-        }}>
-        <MyRoutes isAuthenticated={isAuthenticated!} />
-      </MessengerContex.Provider>
+      <MyRoutes isAuthenticated={isAuthenticated!} />
     </AuthContext.Provider >
   );
 };

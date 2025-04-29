@@ -1,5 +1,4 @@
 import { MouseEvent, ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
-import Chat from "../Models/Chat";
 import { faCheck, faClose, faEdit, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
@@ -16,16 +15,17 @@ import ChangePhotoModal from "./Modal/ChangePhotoModal";
 import { ChangeChatName } from "../services/chats";
 import ChangeChatNameRequest from "../Models/RequestModels/ChangeChatNameRequest";
 import { useAppDispatch, useAppSelector } from "../store/store";
-import { updateChatAvatarAndReturn } from "../store/features/chatService";
-import { setSelectedChat } from "../store/features/selectedChatSlice";
+import { getChatById } from "../store/features/chatService";
+import { changeChatAvatar } from "../store/features/chatSlice";
 
 interface ShowChatInfoProps {
     onCloseChatInfo?: () => void;
 }
 
 const ShowChatInfo: FC<ShowChatInfoProps> = ({onCloseChatInfo }) => {
-    const selectedChat = useAppSelector(state => state.selectedChat).chat!;
-        const dispatch = useAppDispatch();
+    const selectedChatId = useAppSelector(state => state.selectedChat).chatId;
+    const dispatch = useAppDispatch();
+    const selectedChat = useAppSelector(state => getChatById(selectedChatId!)(() => state));   
 
     const {user, token} = useAppSelector(state => state.user);
     const auth = useContext(AuthContext);
@@ -35,7 +35,7 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({onCloseChatInfo }) => {
     let AvatarUrl: string = "";
     let ChatUser: User;
 
-    if (isPrivateChat(selectedChat)) {
+    if (selectedChat && isPrivateChat(selectedChat)) {
         const user1 = selectedChat.user1;
         const user2 = selectedChat.user2;
         const chatUser = user1.id === user?.id ? user2 : user1;
@@ -43,7 +43,7 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({onCloseChatInfo }) => {
         AvatarUrl = chatUser.activeAvatar.url ? chatUser.activeAvatar.url : "http://192.168.0.100:5187/uploads/user.png";
         ChatUser = chatUser;
     }
-    if (isGroupChat(selectedChat)) {
+    if (selectedChat && isGroupChat(selectedChat)) {
         isPrivateTypeChat = false;
         AvatarUrl = selectedChat.activeIcon.url ? selectedChat.activeIcon.url : "http://192.168.0.100:5187/uploads/groups.png";
     }
@@ -89,6 +89,7 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({onCloseChatInfo }) => {
         if (image) {
             setShowModal(false)
             const uploadAvatar = async () => {
+                if(!selectedChat) return;
                 const formData = new FormData();
                 formData.append("file", image);
                 const response = await axios.post(
@@ -102,10 +103,7 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({onCloseChatInfo }) => {
                     }
                 );
                 const avatar: myFile = response.data.activeAvatar;
-                const updatedChat:Chat | null = await dispatch(updateChatAvatarAndReturn(selectedChat.id,avatar));
-                if(updatedChat){
-                    dispatch(setSelectedChat({chat:updatedChat}))
-                }
+                dispatch(changeChatAvatar({chatId:selectedChat.id, newChatAvatar: avatar}));
             };
             uploadAvatar();
         }
@@ -128,6 +126,7 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({onCloseChatInfo }) => {
     const handleSaveChanges = async (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         if (editedChatName) {
+            if(!selectedChat) return;
             const changeChatName = async () => {
 
                 const changeChatNameRequest: ChangeChatNameRequest = {
@@ -137,6 +136,7 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({onCloseChatInfo }) => {
                 const newChatName = await ChangeChatName(token, changeChatNameRequest);
                 if (newChatName) {
                     auth.connection?.invoke("ChangeChatName", {chatId:selectedChat.id, newChatName:editedChatName});
+                    setIsChatNameEditing(false);
                 }
 
             }

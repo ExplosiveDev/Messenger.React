@@ -1,18 +1,19 @@
 import { faArrowLeft,faEdit } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { MouseEvent, FC} from "react";
-import User from "../Models/User";
 import { AnimatePresence, motion } from "framer-motion";
 import "../assets/styles/MainMenueStyles/Componets.css"
 import UserInfo from "./ChatInfo/UserInfo";
+import { useAppSelector } from "../store/store";
 
 interface SidebarProfileProps {
-    User: User;
     handleLeftProfileMode: (e: MouseEvent<HTMLButtonElement>) => void,
     handleEditProfileMode: (e: MouseEvent<HTMLButtonElement>) => void
 }
 
-const SidebarProfile: FC<SidebarProfileProps> = ({ User, handleLeftProfileMode, handleEditProfileMode }) => {
+const SidebarProfile: FC<SidebarProfileProps> = ({ handleLeftProfileMode, handleEditProfileMode }) => {
+    const User = useAppSelector(state => state.user).user!;
+    
     return (
         <AnimatePresence>
             <motion.div className="col-3 sidebar py-2 ps-0 pe-0 "

@@ -39,3 +39,10 @@ export const updateChatAvatarAndReturn = (
 
     return null; 
 };
+
+export const getChatById = (
+    chatId: string
+) => (getState: () => RootState): Chat | null => {
+    const state = getState();
+    return state.chats.chats.find(chat => chat.id === chatId) ?? null;
+};

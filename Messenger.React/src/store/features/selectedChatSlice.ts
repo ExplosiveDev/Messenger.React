@@ -2,10 +2,10 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import Chat from '../../Models/Chat';
 
 export interface ChatsState {
-    chat: Chat | null;
+    chatId: string | '';
 }
 const initialState: ChatsState = {
-    chat: null
+    chatId: ''
 }
 
 export const SelectedChatSlice = createSlice({
@@ -13,7 +13,7 @@ export const SelectedChatSlice = createSlice({
     initialState,
     reducers: {
         setSelectedChat: (state, action: PayloadAction<{ chat: Chat }>) => {
-            state.chat = action.payload.chat;
+            state.chatId = action.payload.chat.id;
             window.sessionStorage.setItem("selectedChatId", action.payload.chat.id )
         },
     }

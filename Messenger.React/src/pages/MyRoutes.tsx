@@ -4,7 +4,6 @@ import Login from "./Login"
 import Registration from "./Registration"
 import Messenger from "./Messenger"
 
-
 interface MyRoutesProps {
     isAuthenticated: Boolean;
 }
