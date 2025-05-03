@@ -1,22 +1,23 @@
 import { MouseEvent, ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
-import { faCheck, faClose, faEdit, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faClose, faEdit, faPlus, faUserPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
-import { AuthContext } from "../context/AuthContext";
-import User from "../Models/User";
-import GroupChat from "../Models/GroupChat";
+import useIndexedDBMessenger from "../../hooks/indexedDbMessenger.hook";
+import { AuthContext } from "../../context/AuthContext";
+import User from "../../Models/User";
+import GroupChat from "../../Models/GroupChat";
 import { AnimatePresence, motion } from "framer-motion";
-import "../assets/styles/MainMenueStyles/Componets.css"
+import "../../assets/styles/MainMenueStyles/Componets.css"
 import axios from "axios";
-import myFile from "../Models/File";
-import GroupMembers from "./ChatInfo/GroupMembers";
-import UserInfo from "./ChatInfo/UserInfo";
-import ChangePhotoModal from "./Modal/ChangePhotoModal";
-import { ChangeChatName } from "../services/chats";
-import ChangeChatNameRequest from "../Models/RequestModels/ChangeChatNameRequest";
-import { useAppDispatch, useAppSelector } from "../store/store";
-import { getChatById } from "../store/features/chatService";
-import { changeChatAvatar } from "../store/features/chatSlice";
+import myFile from "../../Models/File";
+import GroupMembers from "./GroupMembers";
+import UserInfo from "./UserInfo";
+import ChangePhotoModal from "../Modal/ChangePhotoModal";
+import { ChangeChatNameService } from "../../services/chats";
+import ChangeChatNameRequest from "../../Models/RequestModels/ChangeChatNameRequest";
+import { useAppDispatch, useAppSelector } from "../../store/store";
+import { getChatById, getSearchedChatById } from "../../store/features/chatService";
+import { changeChatAvatar } from "../../store/features/chatSlice";
+import AddMembers from "./AddMembers";
 
 interface ShowChatInfoProps {
     onCloseChatInfo?: () => void;
@@ -24,8 +25,10 @@ interface ShowChatInfoProps {
 
 const ShowChatInfo: FC<ShowChatInfoProps> = ({onCloseChatInfo }) => {
     const selectedChatId = useAppSelector(state => state.selectedChat).chatId;
+    const selectedChat = useAppSelector(state => getChatById(selectedChatId)(() => state)) 
+        ? useAppSelector(state => getChatById(selectedChatId)(() => state)) 
+        : useAppSelector(state => getSearchedChatById(selectedChatId)(() => state)) ;   
     const dispatch = useAppDispatch();
-    const selectedChat = useAppSelector(state => getChatById(selectedChatId!)(() => state));   
 
     const {user, token} = useAppSelector(state => state.user);
     const auth = useContext(AuthContext);
@@ -133,7 +136,7 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({onCloseChatInfo }) => {
                     newName: editedChatName,
                     chatId: selectedChat.id
                 };
-                const newChatName = await ChangeChatName(token, changeChatNameRequest);
+                const newChatName = await ChangeChatNameService(token, changeChatNameRequest);
                 if (newChatName) {
                     auth.connection?.invoke("ChangeChatName", {chatId:selectedChat.id, newChatName:editedChatName});
                     setIsChatNameEditing(false);
@@ -282,6 +285,9 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({onCloseChatInfo }) => {
                             <FontAwesomeIcon icon={faCheck} />
                         </button>
                     </motion.div>
+                )}
+                {!showButtonSave && selectedChat && (
+                    <AddMembers Chat={selectedChat}></AddMembers>
                 )}
             </motion.div>
         </AnimatePresence>

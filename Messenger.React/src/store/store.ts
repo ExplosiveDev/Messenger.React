@@ -4,14 +4,18 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
 import { SelectedChatSlice } from './features/selectedChatSlice';
 import { UserSlice } from './features/userSlice';
 import { MessageSlice } from './features/messageSlice';
+import { SearchedChatsSlice } from './features/searchedChatsSlice';
+import { ActionMessageSlice } from './features/actionMessageSlice';
 
 
 export const store = configureStore({
     reducer: {
         chats: ChatSlice.reducer,
+        searchedChats: SearchedChatsSlice.reducer,
         selectedChat: SelectedChatSlice.reducer,
         user: UserSlice.reducer,
-        messages: MessageSlice.reducer
+        messages: MessageSlice.reducer,
+        actionMessage: ActionMessageSlice.reducer
     }
 })
 

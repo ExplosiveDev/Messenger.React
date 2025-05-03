@@ -3,14 +3,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AnimatePresence, motion } from "framer-motion";
 import { MouseEvent, ChangeEvent, FC, useEffect, useRef, useState } from "react";
 import axios from "axios";
-import User from "../Models/User";
-import myFile from "../Models/File";
-import { ChangeUserFields } from "../services/users";
-import "../assets/styles/EditProfile.css"
-import "../assets/styles/MainMenueStyles/Componets.css"
-import ChangePhotoModal from "./Modal/ChangePhotoModal";
-import { useAppDispatch, useAppSelector } from "../store/store";
-import { changeUserAvatar, changeUserName } from "../store/features/userSlice";
+import myFile from "../../Models/File";
+import { ChangeUserFieldsService } from "../../services/users";
+import "../../assets/styles/EditProfile.css"
+import "../../assets/styles/MainMenueStyles/Componets.css"
+import ChangePhotoModal from "../Modal/ChangePhotoModal";
+import { useAppDispatch, useAppSelector } from "../../store/store";
+import { changeUserAvatar, changeUserName } from "../../store/features/userSlice";
 
 interface SidebarEditProfileProps {
     onLeftEditProfileMode: () => void;
@@ -85,7 +84,7 @@ const SidebarEditProfile: FC<SidebarEditProfileProps> = ({ onLeftEditProfileMode
         e.preventDefault();
         if(editedUserName){
             const ChangeUserName = async () => {
-                const newUserName:string = await ChangeUserFields(token!, editedUserName)
+                const newUserName:string = await ChangeUserFieldsService(token!, editedUserName)
                 dispatch(changeUserName({newUserName:newUserName}));
             }
             ChangeUserName();

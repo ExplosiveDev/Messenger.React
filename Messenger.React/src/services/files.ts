@@ -1,7 +1,7 @@
 import axios from "axios";
 
 
-export const uploadMedia = async (token:string, formData:FormData): Promise<string> => {
+export const UploadMediaService = async (token:string, formData:FormData): Promise<string> => {
     const response = await axios.post(
         `http://192.168.0.100:5187/Files/Upload`,
         formData,

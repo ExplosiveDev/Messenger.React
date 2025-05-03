@@ -7,10 +7,12 @@ import searchedGlobalChats from "../Models/ResponsModels/SerchedGlobalChats";
 import CreateGroupChatRequest from "../Models/RequestModels/CreateGroupChatReques";
 import RemoveMemberRequest from "../Models/RequestModels/RemoveMemberRequest";
 import ChangeChatNameRequest from "../Models/RequestModels/ChangeChatNameRequest";
+import AddMembersRequest from "../Models/RequestModels/AddMembersRequest";
+import User from "../Models/User";
 
 
 
-export const getSavedChats = async (token:string): Promise<ChatsCortage | null> => {
+export const getSavedChatsService = async (token:string): Promise<ChatsCortage | null> => {
     try {
         const response = await axios.get<ChatsCortage>(`http://192.168.0.100:5187/Chats/GetSavedChats`, {
             headers: {
@@ -28,7 +30,7 @@ export const getSavedChats = async (token:string): Promise<ChatsCortage | null> 
     }
 }
 
-export const getChat = async (token:string, chatId:string): Promise<Chat> => {
+export const getChatService = async (token:string, chatId:string): Promise<Chat> => {
     const response = await axios.get(
         `http://192.168.0.100:5187/Chats/GetChat`,
         {
@@ -44,7 +46,7 @@ export const getChat = async (token:string, chatId:string): Promise<Chat> => {
     return response.data as Chat;
 }
 
-export const globalChatSearchByName = async (token:string, searchChatName:string): Promise<searchedGlobalChats> => {
+export const globalChatSearchByNameService = async (token:string, searchChatName:string): Promise<searchedGlobalChats> => {
     const response = await axios.get(`http://192.168.0.100:5187/Chats/GetGlobalChatsByName`, {
         params: { name: searchChatName },
         headers: {
@@ -57,7 +59,7 @@ export const globalChatSearchByName = async (token:string, searchChatName:string
     return response.data;
 }
 
-export const createPrivateChat = async (token:string, user2Id:string): Promise<PrivateChat> => {
+export const createPrivateChatService = async (token:string, user2Id:string): Promise<PrivateChat> => {
     const response = await axios.post(
         `http://192.168.0.100:5187/Chats/CreatePrivateChat`,
         null,
@@ -74,7 +76,7 @@ export const createPrivateChat = async (token:string, user2Id:string): Promise<P
     return response.data as PrivateChat;
 }
 
-export const createGroupChat = async (token: string, createGroupChatRequest: CreateGroupChatRequest): Promise<GroupChat> => {
+export const createGroupChatService = async (token: string, createGroupChatRequest: CreateGroupChatRequest): Promise<GroupChat> => {
     const response = await axios.post(
         `http://192.168.0.100:5187/Chats/CreateGroupChat`,
         createGroupChatRequest,
@@ -89,7 +91,7 @@ export const createGroupChat = async (token: string, createGroupChatRequest: Cre
     return response.data;
 };
 
-export const RemoveMember = async (token: string, removeMemberRequest: RemoveMemberRequest): Promise<string | null> => {
+export const RemoveMemberService = async (token: string, removeMemberRequest: RemoveMemberRequest): Promise<string | null> => {
     const response = await axios.post(
         `http://192.168.0.100:5187/Chats/RemoveMember`,
         removeMemberRequest,
@@ -104,7 +106,22 @@ export const RemoveMember = async (token: string, removeMemberRequest: RemoveMem
     return response.status === 200 ? response.data : null;
 };
 
-export const ChangeChatName = async (token: string, changeChatRequest: ChangeChatNameRequest): Promise<string | null> => {
+export const AddMembersService = async (token: string, addMemberRequest: AddMembersRequest): Promise<User[] | null> => {
+    const response = await axios.post(
+        `http://192.168.0.100:5187/Chats/AddMembers`,
+        addMemberRequest,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        }
+    );
+
+    return response.status === 200 ? response.data : null;
+};
+
+export const ChangeChatNameService = async (token: string, changeChatRequest: ChangeChatNameRequest): Promise<string | null> => {
     const response = await axios.post(
         `http://192.168.0.100:5187/Chats/ChangeChatName`,
         changeChatRequest,

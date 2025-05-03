@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import User from "../../Models/User";
 import { secureLocalStorage } from "../../hooks/secureLocalStorage.hook";
 import myFile from "../../Models/File";
+import useIndexedDBMessenger from "../../hooks/indexedDbMessenger.hook";
 
 export interface UserState{
     user:User | null,

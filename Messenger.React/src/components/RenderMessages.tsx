@@ -4,14 +4,18 @@ import ShowMessage from "./ShowMessage";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import messagesReadedPayload from "../Models/ResponsModels/messagesReadedPayload";
 import { motion, AnimatePresence } from "framer-motion";
-import {  useAppSelector } from "../store/store";
-import { getChatById } from "../store/features/chatService";
+import { useAppSelector } from "../store/store";
+import { getChatById, getSearchedChatById } from "../store/features/chatService";
 
 const RenderMessages: FC = () => {
     const selectedChatId = useAppSelector(state => state.selectedChat).chatId;
-    const selectedChat = useAppSelector(state => getChatById(selectedChatId!)(() => state));
+     const selectedChat = useAppSelector(state => getChatById(selectedChatId)(() => state)) 
+     ? useAppSelector(state => getChatById(selectedChatId)(() => state)) 
+     : useAppSelector(state => getSearchedChatById(selectedChatId)(() => state)); 
     const messages = useAppSelector(state => state.messages).messages;
     const user = useAppSelector(state => state.user).user;
+
+
 
     const auth = useContext(AuthContext);
     const { openDb, GetUnReadedMessagIds, SetReadedMessages, getChat } = useIndexedDBMessenger();
@@ -53,6 +57,8 @@ const RenderMessages: FC = () => {
             }
         }
         markMessagesAsRead();
+
+
     }, [auth.connection, dbOpened])
 
 

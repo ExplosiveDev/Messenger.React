@@ -2,9 +2,9 @@ import { faArrowLeft,faEdit } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { MouseEvent, FC} from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import "../assets/styles/MainMenueStyles/Componets.css"
-import UserInfo from "./ChatInfo/UserInfo";
-import { useAppSelector } from "../store/store";
+import "../../assets/styles/MainMenueStyles/Componets.css"
+import UserInfo from "../ChatInformation/UserInfo";
+import { useAppSelector } from "../../store/store";
 
 interface SidebarProfileProps {
     handleLeftProfileMode: (e: MouseEvent<HTMLButtonElement>) => void,

@@ -1,7 +1,7 @@
 import axios from "axios";
 import User from "../Models/User";
 
-export const getContacts = async (token: string): Promise<User[]> => {
+export const GetContactsService = async (token: string): Promise<User[]> => {
     const response = await axios.get<User[]>('http://192.168.0.100:5187/Users/GetContacts', {
         headers: {
             Authorization: `Bearer ${token}`
@@ -10,7 +10,7 @@ export const getContacts = async (token: string): Promise<User[]> => {
     return response.data;
 }
 
-export const ChangeUserFields = async (token: string, newUserName: string): Promise<string> => {
+export const ChangeUserFieldsService = async (token: string, newUserName: string): Promise<string> => {
     const response = await axios.post(
         'http://192.168.0.100:5187/Users/ChangeUserFields',
         newUserName,

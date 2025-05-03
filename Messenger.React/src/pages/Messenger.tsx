@@ -3,41 +3,42 @@ import RenderMessages from "../components/RenderMessages";
 import Chat from "../Models/Chat";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import ChatsCortage from "../Models/ResponsModels/ChatsCortage";
-import { getSavedChats, globalChatSearchByName } from "../services/chats";
-import SidebarProfile from "../components/SidebarProfile";
+import { getSavedChatsService, globalChatSearchByNameService } from "../services/chats";
+import SidebarProfile from "../components/Profile/SidebarProfile";
 import searchedGlobalChats from "../Models/ResponsModels/SerchedGlobalChats";
-import MessageForm from "../components/MessageForm";
-import ChatHeader from "../components/ChatHeader";
-import ShowChatInfo from "../components/ShowChatInfo";
+import MessageForm from "../components/MessageInputForm/MessageForm";
+import ChatHeader from "../components/ChatInformation/ChatHeader";
+import ShowChatInfo from "../components/ChatInformation/ShowChatInfo";
 import SidebarChats from "../components/SidebarChats";
-import SidebarEditProfile from "../components/SidebarEditProfile";
+import SidebarEditProfile from "../components/Profile/SidebarEditProfile";
 import { useAppDispatch, useAppSelector } from "../store/store";
 import { addChat, addChats, changeCountOfUnreadedMessages, changeTopMessage } from "../store/features/chatSlice";
-import { getChatById } from "../store/features/chatService";
+import { getChatById, getSearchedChatById } from "../store/features/chatService";
 import { AuthContext } from "../context/AuthContext";
 import Message from "../Models/Message";
 import { addMessage } from "../store/features/messageSlice";
 import messagesReadedPayload from "../Models/ResponsModels/messagesReadedPayload";
-import { getChat as getChatService } from "../services/chats";
+import { getChatService as getChatService } from "../services/chats";
 import '../assets/styles/bootstrap.min.css';
 import '../assets/styles/MainMenueStyles/MainMenue.css';
 import '../assets/styles/style.css';
+import { setSearchedChats } from "../store/features/searchedChatsSlice";
+import { AnimatePresence } from "framer-motion";
 
 
 const Messenger: FC = () => {
     const selectedChatId = useAppSelector(state => state.selectedChat).chatId;
-    const selectedChat = useAppSelector(state => getChatById(selectedChatId!)(() => state));
+    const selectedChat = useAppSelector(state => getChatById(selectedChatId)(() => state)) 
+        ? useAppSelector(state => getChatById(selectedChatId)(() => state)) 
+        : useAppSelector(state => getSearchedChatById(selectedChatId)(() => state)); 
 
     const { user, token } = useAppSelector(state => state.user);
     const dispatch = useAppDispatch();
 
     const auth = useContext(AuthContext);
 
-
     const [searchChatName, setSearchChat] = useState("");
     const [debouncedTerm, setDebouncedTerm] = useState(searchChatName);
-
-    const [searchedChats, setSearchedChats] = useState<Chat[]>([]);
 
     const [isGlobalSearch, setIsGlobalSearch] = useState(false);
     const [showSavedChats, setShowSavedChats] = useState(true);
@@ -67,7 +68,7 @@ const Messenger: FC = () => {
 
     useEffect(() => {
         if (!DbOpened) return;
-        getSavedChats(token).then((chats: ChatsCortage | null) => {
+        getSavedChatsService(token).then((chats: ChatsCortage | null) => {
             if (chats) {
                 addPrivateChats(chats.privateChats);
                 addGroupChats(chats.groupChats);
@@ -83,7 +84,6 @@ const Messenger: FC = () => {
         if (!auth.connection) return;
         const handleReceiveMessage = async (message: Message, status: number) => {
             if (status == 200) {
-                console.log(message);
                 if (DbOpened) {
                     if (message && user) {
                         const selectedChatId = window.sessionStorage.getItem("selectedChatId");
@@ -94,14 +94,17 @@ const Messenger: FC = () => {
                                 userId: user.id,
                                 messegeIds: [message.id]
                             };
-                            if (auth.connection)
+                            if (auth.connection){
                                 auth.connection.invoke("MessagesReaded", messagesReadedPayload);
+                            }
                         }
-                        if (await getChat(message.id) == null) {
+                        if (await getChat(message.chatId) == null) {
+                            console.log(message)
                             const newChat = await getChatService(token, message.chatId);
                             dispatch(addChat({ chat: newChat }));
                             await addChatDb(newChat);
                         }
+                        
                         const processingMessage = async () => {
                             await addMessageDB(message);
                             if (message.chatId === selectedChatId) {
@@ -118,7 +121,6 @@ const Messenger: FC = () => {
                         const GetCountOfUnReadedMessages = async () => {
                             const unReaded: number = await GetCountOfUnReadedMessagesDB(message.chatId);
                             dispatch(changeCountOfUnreadedMessages({ chatId: message.chatId, count: unReaded }))
-
                         };
                         GetCountOfUnReadedMessages();
                     }
@@ -148,33 +150,20 @@ const Messenger: FC = () => {
             clearTimeout(handler);
         };
     }, [searchChatName]);
-
-    // useEffect(() => {
-    //     if (!DbOpened) return;
-    //     const processingMessage = async () => {
-    //         if (await getChat(messenger.message?.chatId!) == null) {
-    //             const newChat = await getChatService(token, messenger.message?.chatId!);
-    //             dispatch(addChat({chat:newChat}));
-    //             await addChatDb(newChat);
-    //         }
-    //     };
-
-    //     processingMessage();
-    // }, [messenger.message])
-
+    
     useEffect(() => {
         const searchChats = async () => {
             try {
                 const chats: Chat[] = await getChatsByName(searchChatName);
                 if (chats.length > 0) {
-                    setSearchedChats(chats);
+                    dispatch(setSearchedChats({chats:chats}))
                     setIsGlobalSearch(false);
                 }
                 else { //Глобальний пошук всіх приватних та групових чатів за назвою                    
                     setIsGlobalSearch(true);
-                    const data: searchedGlobalChats = await globalChatSearchByName(token, searchChatName);
+                    const data: searchedGlobalChats = await globalChatSearchByNameService(token, searchChatName);
                     const chats: Chat[] = [...data.privateChats, ...data.groupChats];
-                    setSearchedChats(chats);
+                    dispatch(setSearchedChats({chats:chats}))
                 }
             } catch (error) {
                 console.error('Search failed:', error);
@@ -235,30 +224,23 @@ const Messenger: FC = () => {
                         showSearchedChats={showSearchedChats}
                         isGlobalSearch={isGlobalSearch}
                         searchChatName={searchChatName}
-                        searchedChats={searchedChats}
                         handleSearchChange={handleSearchChange}
                         onProfileSelect={onProfileSelect}
                         handleLeftSearchMode={handleLeftSearchMode}
-                    >
-                    </SidebarChats>
+                    />
                 )}
-
                 {((showProfile && !showEditProfile) && user) && (
                     <SidebarProfile
                         handleLeftProfileMode={handleLeftSearchMode}
                         handleEditProfileMode={() => setShowEditProfile(true)}
-                    >
-                    </SidebarProfile>
+                    />
                 )}
 
                 {showEditProfile && user && (
                     <SidebarEditProfile
                         onLeftEditProfileMode={() => setShowEditProfile(false)}
-                    >
-
-                    </SidebarEditProfile>
+                    />
                 )}
-
 
                 <div className={`${showChatInfo ? "col-6" : "col-9"} chat ps-0 pe-0`}>
                     {!!selectedChat && selectedChat!.id != undefined && (

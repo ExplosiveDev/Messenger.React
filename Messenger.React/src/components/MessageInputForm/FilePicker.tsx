@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, FC } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperclip, faTimes } from '@fortawesome/free-solid-svg-icons';
 
-import "../assets/styles/Modal.css"
+import "../../assets/styles/Modal.css"
 
 interface FilePickerDropupProps {
   onFileSelect?: (file: File) => void;

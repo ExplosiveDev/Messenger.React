@@ -1,10 +1,12 @@
-import { FC } from "react";
+import { FC, useEffect, useRef, useState, useCallback } from "react";
 import Message from "../Models/Message";
 import { format, parse } from "date-fns";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import UserChat from "../Models/UserChat";
 import { useAppSelector } from "../store/store";
-import { getChatById } from "../store/features/chatService";
+import { getChatById, getSearchedChatById } from "../store/features/chatService";
+import MessageContextMenu from "./ContextMenue/MessageContextMenu";
+import { AnimatePresence } from "framer-motion";
 
 interface MessageProps {
     Message: Message;
@@ -12,7 +14,10 @@ interface MessageProps {
 
 const ShowMessage: FC<MessageProps> = ({ Message }) => {
     const selectedChatId = useAppSelector(state => state.selectedChat).chatId;
-    const selectedChat = useAppSelector(state => getChatById(selectedChatId!)(() => state));   
+    const selectedChat = useAppSelector(state => getChatById(selectedChatId)(() => state))
+        ? useAppSelector(state => getChatById(selectedChatId)(() => state))
+        : useAppSelector(state => getSearchedChatById(selectedChatId)(() => state));
+
     const user = useAppSelector(state => state.user).user;
 
     const { isTextMessage, isMediaMessage, isGroupChat } = useIndexedDBMessenger();
@@ -35,18 +40,47 @@ const ShowMessage: FC<MessageProps> = ({ Message }) => {
         senderAvatarUrl = senderUserChat?.user?.activeAvatar.url || "/default-avatar.png";
     }
 
+    const messageRef = useRef<HTMLDivElement>(null);
+    const [menuVisible, setMenuVisible] = useState(false);
+    const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+    // Закриття меню при кліку поза ним
+    const handleClickOutside = useCallback((e: MouseEvent) => {
+        if (messageRef.current && !messageRef.current.contains(e.target as Node)) {
+            setMenuVisible(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [handleClickOutside]);
+
+
+    const handleContextMenu = (e: React.MouseEvent<HTMLElement>) => {
+        e.preventDefault();
+        
+        const x = Math.min(e.clientX, window.innerWidth - 180);
+        const y = Math.min(e.clientY, window.innerHeight - 200);
+        
+        setMenuPosition({ x, y });
+        setMenuVisible(true);
+      };
+
     return (
         <div className={`col-12 d-flex ${isMyMessage ? "justify-content-end" : "justify-content-start"} align-items-end`}>
             {!isMyMessage && isGroupChat(selectedChat!) && (
                 <img src={senderAvatarUrl} alt="avatar" className="avatar-mini mb-1" />
             )}
 
-            <div className={`message-box mt-2 ${isMyMessage ? "my-message" : "other-message"}`}>
-
+            <div
+                className={`message-box mt-2 ${isMyMessage ? "my-message" : "other-message"}`}
+                ref={messageRef}
+                onContextMenu={handleContextMenu}
+            >
                 {isGroupChat(selectedChat!) && !isMyMessage && (
                     <div className="sender-name">{senderName}</div>
                 )}
-
 
                 {isTextMessage(Message) && (
                     <>
@@ -56,7 +90,6 @@ const ShowMessage: FC<MessageProps> = ({ Message }) => {
                         </div>
                     </>
                 )}
-
 
                 {isMediaMessage(Message) && Array.isArray(Message.content) && Message.content.length > 0 && (
                     <div className="media-message">
@@ -79,7 +112,15 @@ const ShowMessage: FC<MessageProps> = ({ Message }) => {
                 )}
             </div>
 
-
+            <AnimatePresence>
+            {menuVisible && (
+                <MessageContextMenu
+                    position={menuPosition}
+                    message={Message}
+                    onClose={() => setMenuVisible(false)} // Додано для закриття меню
+                />
+            )}
+            </AnimatePresence>
         </div>
     );
 };

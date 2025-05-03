@@ -4,6 +4,7 @@ import { faEllipsisV, faSignOutAlt, faUser } from "@fortawesome/free-solid-svg-i
 import "../assets/styles/MainMenueStyles/Menue.css" 
 import { useAppSelector, useAppDispatch } from "../store/store";
 import { logout } from "../store/features/userSlice";
+import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 
 interface ChatMenuProps {
     onProfileSelect: () => void;
@@ -15,6 +16,7 @@ const ChatMenu: FC<ChatMenuProps> = ({ onProfileSelect }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
+    const {clearDb} = useIndexedDBMessenger();
 
     // Функція для закриття меню при кліку поза ним
     const handleClickOutside = useCallback((event: MouseEvent) => {
@@ -62,6 +64,7 @@ const ChatMenu: FC<ChatMenuProps> = ({ onProfileSelect }) => {
 
 
     const handleExit = async () => {
+        clearDb();
         dispatch(logout());
     };
 

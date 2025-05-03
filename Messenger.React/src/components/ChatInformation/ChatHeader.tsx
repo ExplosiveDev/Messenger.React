@@ -1,13 +1,12 @@
 import { FC, useContext, useEffect, useState } from "react";
-import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
-import User from "../Models/User";
-import GroupChat from "../Models/GroupChat";
-import { AuthContext } from "../context/AuthContext";
-import { useAppDispatch, useAppSelector } from "../store/store";
-import { getChatById } from "../store/features/chatService";
-import { changeChatName } from "../store/features/chatSlice";
-import Chat from "../Models/Chat";
-import axios from "axios";
+import useIndexedDBMessenger from "../../hooks/indexedDbMessenger.hook";
+import User from "../../Models/User";
+import GroupChat from "../../Models/GroupChat";
+import { AuthContext } from "../../context/AuthContext";
+import { useAppDispatch, useAppSelector } from "../../store/store";
+import { getChatById, getSearchedChatById } from "../../store/features/chatService";
+import { changeChatName } from "../../store/features/chatSlice";
+import Chat from "../../Models/Chat";
 
 interface ChatHeaderProps {
     user: User
@@ -17,7 +16,9 @@ interface ChatHeaderProps {
 const ChatHeader: FC<ChatHeaderProps> = ({ user, onOpenChatInfo }) => {
     const selectedChatId = useAppSelector(state => state.selectedChat).chatId;
     const dispatch = useAppDispatch();
-    const selectedChat = useAppSelector(state => getChatById(selectedChatId!)(() => state));
+     const selectedChat = useAppSelector(state => getChatById(selectedChatId)(() => state)) 
+     ? useAppSelector(state => getChatById(selectedChatId)(() => state)) 
+     : useAppSelector(state => getSearchedChatById(selectedChatId)(() => state)); 
 
     const auth = useContext(AuthContext);
     const [chatName, setChatName] = useState<string>();
@@ -37,6 +38,7 @@ const ChatHeader: FC<ChatHeaderProps> = ({ user, onOpenChatInfo }) => {
             auth.connection?.off("ReceiveNewChatName", handleRenameChatName);
         };
     }, [auth.connection]);
+    
     useEffect(() => {
         if (!selectedChat) return;
         setChatName(computeChatName(selectedChat));

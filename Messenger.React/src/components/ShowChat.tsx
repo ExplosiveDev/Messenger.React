@@ -1,12 +1,12 @@
 import { FC, MouseEvent, useEffect, useState } from "react";
 import Chat from "../Models/Chat";
 import Message from "../Models/Message";
-import { getMessagesByChatId } from "../services/messages";
+import { GetMessagesByChatIdService } from "../services/messages";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import MediaMessage from "../Models/MediaMessage";
 import { useAppDispatch, useAppSelector } from "../store/store";
 import { setSelectedChat } from "../store/features/selectedChatSlice";
-import { changeCountOfUnreadedMessages, changeIsMessagesUpdate} from "../store/features/chatSlice";
+import { changeCountOfUnreadedMessages, changeIsMessagesUpdate } from "../store/features/chatSlice";
 import { setMessages } from "../store/features/messageSlice";
 
 interface ChatProps {
@@ -19,7 +19,7 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
     const dispatch = useAppDispatch()
     const token = useAppSelector(state => state.user).token;
 
-    const { openDb, ChatMessagesUpdate, addMessages, getMessagesByChatId:getMessagesByChatIdDB, isTextMessage, isMediaMessage } = useIndexedDBMessenger();
+    const { openDb, ChatMessagesUpdate, addMessages, getMessagesByChatId: getMessagesByChatIdDB, isTextMessage, isMediaMessage, isChatExist } = useIndexedDBMessenger();
 
     const [dbOpened, setDbOpened] = useState(false);
 
@@ -38,15 +38,16 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
 
     const fetchMessages = async () => {
         try {
-            const messages = await getMessagesByChatId(token, Chat.id);
-            await addMessages([...messages.textMessages, ...messages.mediaMessages as MediaMessage[]]);
+            if (await isChatExist(Chat.id)) {
+                const messages = await GetMessagesByChatIdService(token, Chat.id);
+                await addMessages([...messages.textMessages, ...messages.mediaMessages as MediaMessage[]]);
 
-            const msgs: Message[] = await getMessagesByChatIdDB(Chat.id);
-            dispatch(setMessages({messages:msgs}));
-
-            ChatMessagesUpdate({ ...Chat, isMessagesUpdate: true });
-            dispatch(changeIsMessagesUpdate({chatId:Chat.id, newIsMessagesUpdate:true}));
-        } 
+                const msgs: Message[] = await getMessagesByChatIdDB(Chat.id);
+                dispatch(setMessages({ messages: msgs }));
+                ChatMessagesUpdate({ ...Chat, isMessagesUpdate: true });
+                dispatch(changeIsMessagesUpdate({ chatId: Chat.id, newIsMessagesUpdate: true }));
+            }
+        }
         catch (error) {
             console.error("Error fetching messages:", error);
         }
@@ -54,19 +55,18 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
 
     const selectChat = async (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
-
-        dispatch(setSelectedChat({chat:Chat}));
+        dispatch(setSelectedChat({ chat: Chat }));
 
         if (!Chat.isMessagesUpdate) {
             fetchMessages()
         }
         else {
             const msgs: Message[] = await getMessagesByChatIdDB(Chat.id);
-            dispatch(setMessages({messages:msgs}));
+            dispatch(setMessages({ messages: msgs }));
         }
 
-        if (Chat.unReaded > 0){
-            dispatch(changeCountOfUnreadedMessages({chatId:Chat.id, count: 0}))
+        if (Chat.unReaded > 0) {
+            dispatch(changeCountOfUnreadedMessages({ chatId: Chat.id, count: 0 }))
         }
     };
 
@@ -75,7 +75,7 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
         <div className="col-12 my-1 px-2">
             <button className="btn w-100 chat-hover position-relative d-flex align-items-center" type="button" onClick={selectChat}>
                 <img className="chat-photo me-2" src={ChatPhoto} alt="Chat" />
-    
+
                 <div className="d-flex flex-column text-start">
                     <h3 className="chat-name m-0 text-light">{ChatName}</h3>
                     {Chat.topMessage && isTextMessage(Chat.topMessage) && Chat.topMessage.content && (
@@ -90,14 +90,14 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
                         </div>
                     )}
                 </div>
-    
+
                 {Chat.unReaded > 0 && (
                     <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                         {Chat.unReaded}
                     </span>
                 )}
             </button>
-            
+
         </div>
     );
 };

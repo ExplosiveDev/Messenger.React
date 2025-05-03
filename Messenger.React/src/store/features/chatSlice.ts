@@ -5,6 +5,8 @@ import myFile from '../../Models/File';
 import Message from '../../Models/Message';
 import TextMessage from '../../Models/TextMessage';
 import MediaMessage from '../../Models/MediaMessage';
+import User from '../../Models/User';
+import UserChat from '../../Models/UserChat';
 
 export interface ChatsState {
     chats: Chat[];
@@ -89,6 +91,34 @@ export const ChatSlice = createSlice({
                 const chat = state.chats[chatIndex];
                 chat.unReaded = count;
             }
+        },
+        removeMember:(state, action: PayloadAction<{chatId: string, memberId: string }>) => {
+            const { chatId, memberId } = action.payload;
+            const chatIndex = state.chats.findIndex(chat => chat.id === chatId);
+            if (chatIndex !== -1) {
+                const chat = state.chats[chatIndex];
+                if(isGroupChat(chat)){
+                    chat.userChats = chat.userChats.filter(m => m.userId !== memberId);
+                }
+            }
+        },
+        addMembers:(state, action: PayloadAction<{chatId: string, newMembers: User[] }>) => {
+            const { chatId, newMembers } = action.payload;
+            const chatIndex = state.chats.findIndex(chat => chat.id === chatId);
+            if (chatIndex !== -1) {
+                const chat = state.chats[chatIndex];
+                if(isGroupChat(chat)){
+                    newMembers.forEach((newUser) => {
+                        const newUserChat:UserChat = {
+                            chatId: chatId,
+                            chat:{} as Chat,
+                            userId:newUser.id,
+                            user:newUser
+                        };
+                        chat.userChats.push(newUserChat);
+                    });
+                }
+            }
         }
     }
 })
@@ -96,6 +126,6 @@ export const ChatSlice = createSlice({
 export default ChatSlice.reducer;
 
 export const { 
-    addChat, removeChat, addChats, updateChat, 
+    addChat, removeChat, addChats, updateChat, addMembers,removeMember, 
     changeChatName, changeChatAvatar, changeTopMessage, changeIsMessagesUpdate, changeCountOfUnreadedMessages 
     } = ChatSlice.actions;

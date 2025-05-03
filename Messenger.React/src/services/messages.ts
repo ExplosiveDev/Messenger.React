@@ -7,7 +7,7 @@ import SendMediaMessageRequest from "../Models/RequestModels/SendMediaMessageReq
 import MediaMessage from "../Models/MediaMessage";
 
 
-export const getAllMessages = async (token: string): Promise<Message[]> => {
+export const GetAllMessagesService = async (token: string): Promise<Message[]> => {
     const response = await axios.get<Message[]>('http://192.168.0.100:5187/Messages/GetMessages', {
         headers: {
             Authorization: `Bearer ${token}`
@@ -17,7 +17,7 @@ export const getAllMessages = async (token: string): Promise<Message[]> => {
     return response.data;
 }
 
-export const getMessagesByChatId = async (token: string, chatId:string): Promise<MessagesCortage> => {
+export const GetMessagesByChatIdService = async (token: string, chatId:string): Promise<MessagesCortage> => {
     const response = await axios.get<MessagesCortage>('http://192.168.0.100:5187/Messages/GetMessagesByChat', {
         params:{
             chatId: chatId
@@ -30,7 +30,7 @@ export const getMessagesByChatId = async (token: string, chatId:string): Promise
     return response.data;
 }
 
-export const SendTextMessage = async (token: string, sendTextMessageRequest:SendTextMessageRequest): Promise<TextMessage | null> => {
+export const SendTextMessageService = async (token: string, sendTextMessageRequest:SendTextMessageRequest): Promise<TextMessage | null> => {
     const response = await axios.post(
         `http://192.168.0.100:5187/Messages/SendTextMessage`,
         sendTextMessageRequest,
@@ -45,7 +45,7 @@ export const SendTextMessage = async (token: string, sendTextMessageRequest:Send
     return response.status === 200 ? response.data : null;
 }
 
-export const SendMediaMessage = async (token: string, sendMediaMessageRequest:SendMediaMessageRequest): Promise<MediaMessage | null> => {
+export const SendMediaMessageService = async (token: string, sendMediaMessageRequest:SendMediaMessageRequest): Promise<MediaMessage | null> => {
     const response = await axios.post(
         `http://192.168.0.100:5187/Messages/SendMediaMessage`,
         sendMediaMessageRequest,

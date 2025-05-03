@@ -2,10 +2,10 @@ import { FC, MouseEvent, useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTimes, faUsers, faCommentDots, faBullhorn } from "@fortawesome/free-solid-svg-icons";
 import User from "../Models/User";
-import { getContacts } from "../services/users";
+import { GetContactsService } from "../services/users";
 import CreateGroupChatRequest from "../Models/RequestModels/CreateGroupChatReques";
 import GroupChat from "../Models/GroupChat";
-import { createGroupChat } from "../services/chats";
+import { createGroupChatService } from "../services/chats";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import { useAppDispatch, useAppSelector } from "../store/store";
 import { setSelectedChat } from "../store/features/selectedChatSlice";
@@ -62,7 +62,7 @@ const FabMenu: FC = () => {
 
     const handleCreateGroup = async (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        const Contacts: User[] = await getContacts(token);
+        const Contacts: User[] = await GetContactsService(token);
         setIsOpen(false);
         setShowModal(true);
         setContacts(Contacts);
@@ -102,10 +102,8 @@ const FabMenu: FC = () => {
             selectedContacts: selectedContacts,
             groupName: groupName
         }
-
-        // console.log(CreatGroupRequest);
         
-        const groupChat:GroupChat = await createGroupChat(token, CreatGroupRequest);
+        const groupChat:GroupChat = await createGroupChatService(token, CreatGroupRequest);
         await addGroupChat(groupChat);
         dispatch(addChat({chat:groupChat}));
         dispatch(setSelectedChat({chat:groupChat}));

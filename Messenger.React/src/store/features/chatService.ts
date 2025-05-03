@@ -46,3 +46,10 @@ export const getChatById = (
     const state = getState();
     return state.chats.chats.find(chat => chat.id === chatId) ?? null;
 };
+
+export const getSearchedChatById = (
+    chatId: string
+) => (getState: () => RootState): Chat | null => {
+    const state = getState();
+    return state.searchedChats.searchedChats.find(chat => chat.id === chatId) ?? null;
+};
