@@ -286,7 +286,7 @@ const ShowChatInfo: FC<ShowChatInfoProps> = ({onCloseChatInfo }) => {
                         </button>
                     </motion.div>
                 )}
-                {!showButtonSave && selectedChat && (
+                {!showButtonSave && selectedChat && isGroupChat(selectedChat) && (
                     <AddMembers Chat={selectedChat}></AddMembers>
                 )}
             </motion.div>

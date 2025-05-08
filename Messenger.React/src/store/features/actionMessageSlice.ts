@@ -24,7 +24,6 @@ export const ActionMessageSlice = createSlice({
             const { actionType, message } = action.payload;
             state.actionType = actionType;
             state.actionMessage = message;
-            console.log(actionType);
         },
         closeAction:(state) => {
             state.actionMessage = null,

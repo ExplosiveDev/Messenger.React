@@ -59,13 +59,15 @@ const ShowMessage: FC<MessageProps> = ({ Message }) => {
 
     const handleContextMenu = (e: React.MouseEvent<HTMLElement>) => {
         e.preventDefault();
-        
-        const x = Math.min(e.clientX, window.innerWidth - 180);
-        const y = Math.min(e.clientY, window.innerHeight - 200);
-        
-        setMenuPosition({ x, y });
-        setMenuVisible(true);
-      };
+        if (Message.senderId === user?.id) {
+            const x = Math.min(e.clientX, window.innerWidth - 180);
+            const y = Math.min(e.clientY, window.innerHeight - 200);
+
+            setMenuPosition({ x, y });
+            setMenuVisible(true);
+
+        }
+    };
 
     return (
         <div className={`col-12 d-flex ${isMyMessage ? "justify-content-end" : "justify-content-start"} align-items-end`}>
@@ -113,13 +115,13 @@ const ShowMessage: FC<MessageProps> = ({ Message }) => {
             </div>
 
             <AnimatePresence>
-            {menuVisible && (
-                <MessageContextMenu
-                    position={menuPosition}
-                    message={Message}
-                    onClose={() => setMenuVisible(false)} // Додано для закриття меню
-                />
-            )}
+                {menuVisible && (
+                    <MessageContextMenu
+                        position={menuPosition}
+                        message={Message}
+                        onClose={() => setMenuVisible(false)} // Додано для закриття меню
+                    />
+                )}
             </AnimatePresence>
         </div>
     );

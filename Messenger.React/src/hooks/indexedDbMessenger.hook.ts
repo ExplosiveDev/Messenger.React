@@ -12,7 +12,7 @@ import { useAppSelector } from "../store/store";
 
 function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1) {
   const [db, setDb] = useState<IDBDatabase | null>(null);
-  const {user,token} = useAppSelector(state => state.user);
+  const { user, token } = useAppSelector(state => state.user);
 
   const storeNames = {
     TextMessages: "TextMessages",
@@ -72,20 +72,20 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
       if (db) {
         db.close(); // Спочатку закриваємо, щоб уникнути блокування
       }
-  
+
       const deleteRequest = indexedDB.deleteDatabase(dbName);
-  
+
       deleteRequest.onsuccess = () => {
         console.log(`Database "${dbName}" deleted successfully`);
         setDb(null);
         resolve();
       };
-  
+
       deleteRequest.onerror = () => {
         console.error(`Failed to delete database "${dbName}":`, deleteRequest.error);
         reject(deleteRequest.error);
       };
-  
+
       deleteRequest.onblocked = () => {
         console.warn(`Deletion of database "${dbName}" is blocked`);
       };
@@ -155,11 +155,11 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
         reject("Database is not initialized");
         return;
       }
-  
+
       const transaction = db.transaction(storeName, "readwrite");
       const store = transaction.objectStore(storeName);
       const request = store.delete(id);
-  
+
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
@@ -281,61 +281,72 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
       await addItem(storeName, chat);
     }
   }
- 
-  const addMessages = async (messages:Message[]): Promise<void> => {
+
+  const addMessages = async (messages: Message[]): Promise<void> => {
     messages.forEach((msg) => {
       addMessage(msg);
     });
   }
 
-  const addMessage = async (message:Message): Promise<void> => {
-    if(isTextMessage(message)) {
+  const addMessage = async (message: Message): Promise<void> => {
+    if (isTextMessage(message)) {
       await addItem(storeNames.TextMessages, message);
       return;
     }
-    if(isMediaMessage(message)){
+    if (isMediaMessage(message)) {
       await addItem(storeNames.MediaMessages, message);
       return;
-    } 
+    }
   }
 
-  const addChat = async (chat:Chat) : Promise<void> => {
-    if(isPrivateChat(chat)) {
+  const addChat = async (chat: Chat): Promise<void> => {
+    if (isPrivateChat(chat)) {
       await addItem(storeNames.PrivateChats, chat);
       return;
     }
-    if(isGroupChat(chat)){
+    if (isGroupChat(chat)) {
       await addItem(storeNames.GroupChats, chat);
       return;
-    } 
+    }
   }
 
-  const removeMemberDb = async (chatId:string, memberId:string) =>{
+  const removeMemberDb = async (chatId: string, memberId: string) => {
     const chat = await getChat(chatId);
 
-    if(chat){
+    if (chat) {
       const updatedUsersChat = chat.userChats.filter((uc: UserChat) => uc.userId !== memberId);
 
-        const updatedChat = {
-            ...chat,
-            usersChat: updatedUsersChat
-        };
+      const updatedChat = {
+        ...chat,
+        usersChat: updatedUsersChat
+      };
 
-        await addChat(updatedChat); 
+      await addChat(updatedChat);
     }
   }
 
-  const removeChat = async (chatId:string) =>{
+  const removeChat = async (chatId: string) => {
     const chat = await getChat(chatId);
-    if(chat){
-      if(isPrivateChat(chat)) removeItem(storeNames.PrivateChats, chat.id);
-      if(isGroupChat(chat)) removeItem(storeNames.GroupChats, chat.id);
+    if (chat) {
+      if (isPrivateChat(chat)) removeItem(storeNames.PrivateChats, chat.id);
+      if (isGroupChat(chat)) removeItem(storeNames.GroupChats, chat.id);
     }
   }
 
-  const isChatExist = async (chatId:string) : Promise<boolean> => {
+  const isChatExist = async (chatId: string): Promise<boolean> => {
     const chat = await getChat(chatId);
     return chat ? true : false;
+  }
+
+  const editTextMessageDb = async (messageId: string, newTextMessageContent: string): Promise<void> => {
+    const message:TextMessage = await getItem(storeNames.TextMessages, messageId);
+    if (message) {
+      const updatedMessage:TextMessage = {
+        ...message,
+        content: newTextMessageContent
+      };
+      await addItem(storeNames.TextMessages, updatedMessage);
+    }
   }
 
 
@@ -344,14 +355,14 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
     // Private Chats
     addPrivateChat: (data: PrivateChat) => addItem(storeNames.PrivateChats, data),
     addPrivateChats: (data: PrivateChat[]) => addItems(storeNames.PrivateChats, data),
-    removePrivateChat:(id:string) => removeItem(storeNames.PrivateChats, id),
+    removePrivateChat: (id: string) => removeItem(storeNames.PrivateChats, id),
     getPrivateChat: (id: string) => getItem<PrivateChat>(storeNames.PrivateChats, id),
     getPrivateChats: () => getItems<PrivateChat>(storeNames.PrivateChats),
 
     // Group Chats
     addGroupChat: (data: GroupChat) => addItem(storeNames.GroupChats, data),
     addGroupChats: (data: GroupChat[]) => addItems(storeNames.GroupChats, data),
-    removeGroupChat:(id:string) => removeItem(storeNames.GroupChats, id),
+    removeGroupChat: (id: string) => removeItem(storeNames.GroupChats, id),
     getGroupChat: (id: string) => getItem<GroupChat>(storeNames.GroupChats, id),
     getGroupChats: () => getItems<GroupChat>(storeNames.GroupChats),
 
@@ -370,7 +381,7 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
     db,
 
     getChat, getChats, isChatExist, getChatsByName, ChatMessagesUpdate, addChat, removeChat, removeMemberDb,
-    isPrivateChat, isGroupChat, isTextMessage, isMediaMessage, addMessage,
+    isPrivateChat, isGroupChat, isTextMessage, isMediaMessage, addMessage, editTextMessageDb,
     getMessagesByChatId, GetCountOfUnReadedMessages, GetUnReadedMessagIds, SetReadedMessages, addMessages
 
   };

@@ -1,4 +1,4 @@
-import { ChangeEvent, FC, FormEvent, useContext, useEffect, useState } from "react";
+import {FC, FormEvent, useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { createPrivateChatService } from "../../services/chats";
 import FilePicker from "./FilePicker";
@@ -8,7 +8,7 @@ import SendTextMessageRequest from "../../Models/RequestModels/SendTextMessageRe
 import TextMessage from "../../Models/TextMessage";
 import SendMediaMessageRequest from "../../Models/RequestModels/SendMediaMessageRequest";
 import MediaMessage from "../../Models/MediaMessage";
-import { SendTextMessageService, SendMediaMessageService } from "../../services/messages";
+import { SendTextMessageService, SendMediaMessageService, EditTextMessageService } from "../../services/messages";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import PrivateChat from "../../Models/PrivateChat";
 import { setSelectedChat } from "../../store/features/selectedChatSlice";
@@ -20,6 +20,9 @@ import ActionMessageForm from "./ActionMessageForm";
 
 import "../../assets/styles/Action.css"
 import { closeAction } from "../../store/features/actionMessageSlice";
+import EditTextMessageRequest from "../../Models/RequestModels/EditTextMessageRequest";
+import { editTextMessage } from "../../store/features/messageSlice";
+import { editMessageAndUpdateChat } from "../../store/features/messageService";
 
 const MessageForm: FC = () => {
     const selectedChatId = useAppSelector(state => state.selectedChat).chatId;
@@ -34,16 +37,12 @@ const MessageForm: FC = () => {
 
     const auth = useContext(AuthContext);
 
-    const { openDb, getChat, addChat: addChatDb, isTextMessage } = useIndexedDBMessenger()
+    const { openDb, getChat, addChat: addChatDb, isTextMessage, editTextMessageDb } = useIndexedDBMessenger()
     const [DbOpened, setDbOpened] = useState(false);
 
     const [message, setMessage] = useState("");
     const [file, setFile] = useState<File | null>(null);
-    const isAction = actionMessage && actionType !== "";
-
-    const handleMessageChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setMessage(e.target.value);
-    };
+    const isActionWithMessage = actionMessage && actionType !== "";
 
     useEffect(() => {
         const initChatsDb = async () => {
@@ -70,7 +69,18 @@ const MessageForm: FC = () => {
     const handleActionMessage = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if(actionType === actions.Edit){
-            console.log(message, " -> ", actionType);
+            if((actionMessage as TextMessage).content === message) return;
+            if(actionMessage?.id){
+                const editTextMessageRequest:EditTextMessageRequest = {
+                    textMessageId:actionMessage?.id,
+                    newTextMessageContent: message
+                }
+                const newContent = await EditTextMessageService(token, editTextMessageRequest);
+                if(newContent){
+                    await dispatch(editMessageAndUpdateChat({chatId:actionMessage.chatId, messageId: actionMessage.id, newContent: newContent}));
+                    await editTextMessageDb(actionMessage.id, newContent);
+                }
+            }
         }
         dispatch(closeAction());
     }
@@ -80,7 +90,6 @@ const MessageForm: FC = () => {
         await addChatDb(newChat);
         dispatch(addChat({ chat: newChat }));
         dispatch(setSelectedChat({ chat: newChat }));
-
         return newChat.id
     }
 
@@ -128,20 +137,24 @@ const MessageForm: FC = () => {
         }
     };
 
-    const handleFileSelect = (file: File) => {
-        console.log('File selected:', file);
-        setFile(file);
+    const handleSendMessage = async (e: FormEvent<HTMLFormElement>) => {
+        if(isActionWithMessage){
+            await handleActionMessage(e);
+        }
+        else{
+            await handleSubmitMessage(e)
+        }
     };
 
     return (
         <>
-            <form onSubmit={isAction ? handleActionMessage : handleSubmitMessage} className="d-flex flex-column mx-5 px-5 mb-2">
+            <form onSubmit={handleSendMessage} className="d-flex flex-column mx-5 px-5 mb-2">
 
                 <ActionMessageForm />
 
                 <div className="d-flex align-items-center gap-2">
                     <FilePicker
-                        onFileSelect={handleFileSelect}
+                        onFileSelect={(file: File) => setFile(file)}
                         onPhotoSelect={handlePhotoSelect}
                     />
 
@@ -150,11 +163,11 @@ const MessageForm: FC = () => {
                         className="text-input flex-grow-1"
                         placeholder="Message"
                         value={message}
-                        onChange={handleMessageChange}
+                        onChange={(e) => setMessage(e.target.value)}
                     />
 
                     <button className="btn btn-primary" type="submit">
-                        <FontAwesomeIcon color="white" icon={isAction ? faCheck : faPaperPlane} />
+                        <FontAwesomeIcon color="white" icon={isActionWithMessage ? faCheck : faPaperPlane} />
                     </button>
                 </div>
             </form>

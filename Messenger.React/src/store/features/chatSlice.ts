@@ -18,7 +18,7 @@ function isGroupChat(chat: Chat): chat is GroupChat {
     return (chat as GroupChat).groupName !== undefined;
 }
 
-function isTextMessage(message: Message): message is TextMessage {
+export function isTextMessage(message: Message): message is TextMessage {
     return (message as TextMessage).content !== undefined && (message as MediaMessage).mediaType === undefined;
 }
 

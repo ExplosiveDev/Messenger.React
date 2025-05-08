@@ -5,6 +5,7 @@ import SendTextMessageRequest from "../Models/RequestModels/SendTextMessageReque
 import TextMessage from "../Models/TextMessage";
 import SendMediaMessageRequest from "../Models/RequestModels/SendMediaMessageRequest";
 import MediaMessage from "../Models/MediaMessage";
+import EditTextMessageRequest from "../Models/RequestModels/EditTextMessageRequest";
 
 
 export const GetAllMessagesService = async (token: string): Promise<Message[]> => {
@@ -49,6 +50,21 @@ export const SendMediaMessageService = async (token: string, sendMediaMessageReq
     const response = await axios.post(
         `http://192.168.0.100:5187/Messages/SendMediaMessage`,
         sendMediaMessageRequest,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        }
+    );
+
+    return response.status === 200 ? response.data : null;
+}
+
+export const EditTextMessageService = async (token: string, editTextMessageRequest:EditTextMessageRequest): Promise<string | null> => {
+    const response = await axios.post(
+        `http://192.168.0.100:5187/Messages/EditTextMessage`,
+        editTextMessageRequest,
         {
             headers: {
                 Authorization: `Bearer ${token}`,
