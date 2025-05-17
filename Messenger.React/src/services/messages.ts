@@ -75,3 +75,18 @@ export const EditTextMessageService = async (token: string, editTextMessageReque
 
     return response.status === 200 ? response.data : null;
 }
+
+export const RemoveMessageService = async (token: string, removeMessageId:string): Promise<string | null> => {
+    const response = await axios.post(
+        `http://192.168.0.100:5187/Messages/RemoveMessage`,
+        removeMessageId,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        }
+    );
+
+    return response.status === 200 ? response.data : null;
+}

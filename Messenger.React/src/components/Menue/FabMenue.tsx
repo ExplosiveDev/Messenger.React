@@ -1,18 +1,17 @@
 import { FC, MouseEvent, useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTimes, faUsers, faCommentDots, faBullhorn } from "@fortawesome/free-solid-svg-icons";
-import User from "../Models/User";
-import { GetContactsService } from "../services/users";
-import CreateGroupChatRequest from "../Models/RequestModels/CreateGroupChatReques";
-import GroupChat from "../Models/GroupChat";
-import { createGroupChatService } from "../services/chats";
-import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
-import { useAppDispatch, useAppSelector } from "../store/store";
-import { setSelectedChat } from "../store/features/selectedChatSlice";
-import { addChat } from "../store/features/chatSlice";
+import User from "../../Models/User";
+import { GetContactsService } from "../../services/users";
+import CreateGroupChatRequest from "../../Models/RequestModels/CreateGroupChatReques";
+import GroupChat from "../../Models/GroupChat";
+import { createGroupChatService } from "../../services/chats";
+import useIndexedDBMessenger from "../../hooks/indexedDbMessenger.hook";
+import { useAppDispatch, useAppSelector } from "../../store/store";
+import { setSelectedChat } from "../../store/features/selectedChatSlice";
+import { addChat } from "../../store/features/chatSlice";
 
-import "../assets/styles/MainMenueStyles/FabMenue.css"
-import "../assets/styles/Modal.css"
+import "../../assets/styles/MainMenueStyles/FabMenue.css"
 
 const FabMenu: FC = () => {
     const dispatch = useAppDispatch();

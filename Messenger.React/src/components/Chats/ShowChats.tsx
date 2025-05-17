@@ -1,12 +1,12 @@
 import { FC, useContext, useEffect, useState } from "react";
 import ShowChat from "./ShowChat";
-import Chat from "../Models/Chat";
-import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
+import Chat from "../../Models/Chat";
+import useIndexedDBMessenger from "../../hooks/indexedDbMessenger.hook";
 import { motion } from "framer-motion";
-import { useAppDispatch, useAppSelector } from "../store/store";
-import { AuthContext } from "../context/AuthContext";
-import { addChat, removeChat } from "../store/features/chatSlice";
-import { getChatService } from "../services/chats";
+import { useAppDispatch, useAppSelector } from "../../store/store";
+import { AuthContext } from "../../context/AuthContext";
+import { addChat, removeChat } from "../../store/features/chatSlice";
+import { getChatService } from "../../services/chats";
 
 interface ChatsProps {
   Chats: Chat[];

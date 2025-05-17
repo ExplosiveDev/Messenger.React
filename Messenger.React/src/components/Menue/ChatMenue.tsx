@@ -1,10 +1,11 @@
 import { FC, useState, useRef, useEffect, useCallback, useContext } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEllipsisV, faSignOutAlt, faUser } from "@fortawesome/free-solid-svg-icons";
-import "../assets/styles/MainMenueStyles/Menue.css" 
-import { useAppSelector, useAppDispatch } from "../store/store";
-import { logout } from "../store/features/userSlice";
-import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
+import { useAppSelector, useAppDispatch } from "../../store/store";
+import { logout } from "../../store/features/userSlice";
+import useIndexedDBMessenger from "../../hooks/indexedDbMessenger.hook";
+
+import "../../assets/styles/MainMenueStyles/Menue.css"
 
 interface ChatMenuProps {
     onProfileSelect: () => void;

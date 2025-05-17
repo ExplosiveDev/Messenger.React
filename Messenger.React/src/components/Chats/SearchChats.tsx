@@ -1,5 +1,5 @@
 import { FC, useEffect} from "react";
-import Chat from "../Models/Chat";
+import Chat from "../../Models/Chat";
 import ShowChats from "./ShowChats";
 
 interface ChatProps {

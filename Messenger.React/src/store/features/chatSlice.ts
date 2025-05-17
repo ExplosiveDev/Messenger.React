@@ -73,7 +73,10 @@ export const ChatSlice = createSlice({
             if (chatIndex !== -1) {
                 const chat = state.chats[chatIndex];
                 if(isTextMessage(newTopMessage)) chat.topMessage = newTopMessage;
-                if(isMediaMessage(newTopMessage)) chat.topMessage = newTopMessage;
+                else if(isMediaMessage(newTopMessage)) chat.topMessage = newTopMessage;
+                else {
+                    chat.topMessage = {} as TextMessage;
+                }
             }
         },
         changeIsMessagesUpdate:(state, action: PayloadAction<{chatId: string, newIsMessagesUpdate: boolean }>) => {

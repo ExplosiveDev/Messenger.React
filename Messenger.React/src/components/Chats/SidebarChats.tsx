@@ -1,11 +1,11 @@
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ChangeEvent, FC, MouseEvent } from "react";
-import ChatMenu from "./ChatMenue";
-import FabMenu from "./FabMenue";
+import ChatMenu from "../Menue/ChatMenue";
+import FabMenu from "../Menue/FabMenue";
 import SearchChats from "./SearchChats";
 import ShowChats from "./ShowChats";
-import { useAppSelector } from "../store/store";
+import { useAppSelector } from "../../store/store";
 
 interface SidebarChatsProps {
     showSavedChats: boolean,

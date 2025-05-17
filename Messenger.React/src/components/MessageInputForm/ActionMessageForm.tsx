@@ -4,6 +4,7 @@ import { faEdit, faClose } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { closeAction } from "../../store/features/actionMessageSlice";
 import TextMessage from "../../Models/TextMessage";
+import "../../assets/styles/Action.css"
 
 const ActionMessageForm: FC = () => {
     const { actions, actionType, actionMessage } = useAppSelector(state => state.actionMessage);

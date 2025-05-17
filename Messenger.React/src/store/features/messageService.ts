@@ -7,7 +7,7 @@ import { RootState } from "../store";
 export const editMessageAndUpdateChat = createAsyncThunk(
     'messages/editMessageAndUpdateChat',
     async ({ chatId, messageId, newContent }: { chatId: string, messageId: string, newContent: string }, { dispatch, getState }) => {
-        dispatch(editTextMessage({ chatId, messageId, newContent }));
+        dispatch(editTextMessage({ messageId, newContent }));
         
         const state = getState() as RootState;
         const chat = getChatById(chatId)(() => state);

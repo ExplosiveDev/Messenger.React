@@ -1,11 +1,11 @@
 import { FC, useEffect, useRef, useState, useCallback } from "react";
-import Message from "../Models/Message";
+import Message from "../../Models/Message";
 import { format, parse } from "date-fns";
-import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
-import UserChat from "../Models/UserChat";
-import { useAppSelector } from "../store/store";
-import { getChatById, getSearchedChatById } from "../store/features/chatService";
-import MessageContextMenu from "./ContextMenue/MessageContextMenu";
+import useIndexedDBMessenger from "../../hooks/indexedDbMessenger.hook";
+import UserChat from "../../Models/UserChat";
+import { useAppSelector } from "../../store/store";
+import { getChatById, getSearchedChatById } from "../../store/features/chatService";
+import MessageContextMenu from "./../ContextMenue/MessageContextMenu";
 import { AnimatePresence } from "framer-motion";
 
 interface MessageProps {
@@ -65,7 +65,6 @@ const ShowMessage: FC<MessageProps> = ({ Message }) => {
 
             setMenuPosition({ x, y });
             setMenuVisible(true);
-
         }
     };
 
@@ -119,7 +118,7 @@ const ShowMessage: FC<MessageProps> = ({ Message }) => {
                     <MessageContextMenu
                         position={menuPosition}
                         message={Message}
-                        onClose={() => setMenuVisible(false)} // Додано для закриття меню
+                        onClose={() => setMenuVisible(false)}
                     />
                 )}
             </AnimatePresence>

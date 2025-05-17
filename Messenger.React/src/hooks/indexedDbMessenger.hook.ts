@@ -9,6 +9,7 @@ import TextMessage from "../Models/TextMessage";
 import MediaMessage from "../Models/MediaMessage";
 import UserChat from "../Models/UserChat";
 import { useAppSelector } from "../store/store";
+import { StepId } from "framer-motion";
 
 function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1) {
   const [db, setDb] = useState<IDBDatabase | null>(null);
@@ -98,8 +99,6 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
         reject("Database is not initialized");
         return;
       }
-      if (storeName == storeNames.TextMessages || storeName == storeNames.MediaMessages)
-        SetLastMessageToChat((data as Message).chatId, data as Message);
 
 
       const transaction = db.transaction(storeName, "readwrite");
@@ -199,6 +198,16 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
     return messages;
   }
 
+  const getMessage = async (messageId:string): Promise<Message> => {
+    const textMessage = await getItem<TextMessage>(storeNames.TextMessages,messageId);
+    if(textMessage) return textMessage;
+
+    const mediaMessage = await getItem<MediaMessage>(storeNames.MediaMessages, messageId);
+    if(mediaMessage) return mediaMessage;
+
+    return {} as Message;
+  }
+
   const getChat = async (chatId: string): Promise<Chat | undefined> => {
     const chats = await getChats();
     return chats.find(chat => chat.id === chatId);
@@ -291,12 +300,11 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
   const addMessage = async (message: Message): Promise<void> => {
     if (isTextMessage(message)) {
       await addItem(storeNames.TextMessages, message);
-      return;
     }
     if (isMediaMessage(message)) {
       await addItem(storeNames.MediaMessages, message);
-      return;
     }
+    SetLastMessageToChat((message as Message).chatId, message as Message);
   }
 
   const addChat = async (chat: Chat): Promise<void> => {
@@ -349,6 +357,22 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
     }
   }
 
+  const getChatTopMessage = async (chatId:string): Promise<Message> => {
+    const messages = await getMessagesByChatId(chatId);
+    return messages[messages.length - 1] ? messages[messages.length - 1] : {} as Message;
+  }
+
+  const isChatTopMessage = async (chatId:string, messageId:string): Promise<boolean> => {
+    const messages = await getMessagesByChatId(chatId);
+    return messages[messages.length - 1].id === messageId;
+  }
+
+  const removeMessageDb = async (messageId:string): Promise<void> => {
+    const message = await getMessage(messageId);
+    if(isTextMessage(message)) removeItem(storeNames.TextMessages, messageId);
+    if(isMediaMessage(message)) removeItem(storeNames.MediaMessages, messageId);
+  }
+
 
   return {
     openDb, clearDb,
@@ -380,9 +404,9 @@ function useIndexedDBMessenger(dbName: string = "Messenger", version: number = 1
 
     db,
 
-    getChat, getChats, isChatExist, getChatsByName, ChatMessagesUpdate, addChat, removeChat, removeMemberDb,
+    getChat, getChats, isChatExist, getChatsByName, ChatMessagesUpdate,SetLastMessageToChat, addChat, removeChat, removeMemberDb,
     isPrivateChat, isGroupChat, isTextMessage, isMediaMessage, addMessage, editTextMessageDb,
-    getMessagesByChatId, GetCountOfUnReadedMessages, GetUnReadedMessagIds, SetReadedMessages, addMessages
+    getMessagesByChatId, GetCountOfUnReadedMessages, GetUnReadedMessagIds, SetReadedMessages, addMessages, getMessage, removeMessageDb, getChatTopMessage, isChatTopMessage
 
   };
 }

@@ -17,12 +17,8 @@ import { getChatById, getSearchedChatById } from "../../store/features/chatServi
 import { faCheck, faPaperPlane } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ActionMessageForm from "./ActionMessageForm";
-
-import "../../assets/styles/Action.css"
 import { closeAction } from "../../store/features/actionMessageSlice";
 import EditTextMessageRequest from "../../Models/RequestModels/EditTextMessageRequest";
-import { editTextMessage } from "../../store/features/messageSlice";
-import { editMessageAndUpdateChat } from "../../store/features/messageService";
 
 const MessageForm: FC = () => {
     const selectedChatId = useAppSelector(state => state.selectedChat).chatId;
@@ -75,10 +71,16 @@ const MessageForm: FC = () => {
                     textMessageId:actionMessage?.id,
                     newTextMessageContent: message
                 }
-                const newContent = await EditTextMessageService(token, editTextMessageRequest);
+                const newContent:string | null = await EditTextMessageService(token, editTextMessageRequest);
                 if(newContent){
-                    await dispatch(editMessageAndUpdateChat({chatId:actionMessage.chatId, messageId: actionMessage.id, newContent: newContent}));
-                    await editTextMessageDb(actionMessage.id, newContent);
+                    if(auth.connection){
+                        const data = {
+                            messageId: actionMessage.id,
+                            chatId: actionMessage.chatId,
+                            newMessageContent: newContent.toString()
+                        }
+                        auth.connection.invoke("EditMessage", data);
+                    }
                 }
             }
         }

@@ -1,4 +1,4 @@
-import { FC, MouseEvent } from "react";
+import { FC, MouseEvent, useContext } from "react";
 import Message from "../../Models/Message";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy, faTrash, faEdit } from "@fortawesome/free-solid-svg-icons";
@@ -6,6 +6,8 @@ import "../../assets/styles/ContextMenue.css";
 import { motion } from "framer-motion";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { addAction } from "../../store/features/actionMessageSlice";
+import { RemoveMessageService } from "../../services/messages";
+import { AuthContext } from "../../context/AuthContext";
 
 interface MessageContextMenuProps {
     position: { x: number; y: number };
@@ -16,8 +18,24 @@ interface MessageContextMenuProps {
 const MessageContextMenu: FC<MessageContextMenuProps> = ({ position, message, onClose }) => {
     const actions = useAppSelector(state => state.actionMessage).actions;
     const dispatch = useAppDispatch();
-    const handleAction = (e: MouseEvent<HTMLButtonElement>, action: string) => { 
-        if(action == actions.Edit) dispatch(addAction({actionType:action, message: message}));
+    const token = useAppSelector(state => state.user).token;
+    const auth = useContext(AuthContext);
+
+
+    const handleAction = async (e: MouseEvent<HTMLButtonElement>, action: string) => { 
+        if(action === actions.Edit) dispatch(addAction({actionType:action, message: message}));
+
+        if(action === actions.Delete){
+            const removedMessageId = await RemoveMessageService(token, message.id);
+            if(removedMessageId != null && auth.connection){
+                const data = {
+                    messageId: message.id,
+                    chatId: message.chatId,
+                }
+                auth.connection.invoke("RemoveMessage", data);
+            }
+        }
+
         onClose(); 
     };
 

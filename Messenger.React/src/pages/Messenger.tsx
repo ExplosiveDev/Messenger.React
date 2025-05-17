@@ -1,5 +1,5 @@
 import { ChangeEvent, FC, MouseEvent, useContext, useEffect, useState } from "react";
-import RenderMessages from "../components/RenderMessages";
+import RenderMessages from "../components/Message/RenderMessages";
 import Chat from "../Models/Chat";
 import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
 import ChatsCortage from "../Models/ResponsModels/ChatsCortage";
@@ -9,7 +9,7 @@ import searchedGlobalChats from "../Models/ResponsModels/SerchedGlobalChats";
 import MessageForm from "../components/MessageInputForm/MessageForm";
 import ChatHeader from "../components/ChatInformation/ChatHeader";
 import ShowChatInfo from "../components/ChatInformation/ShowChatInfo";
-import SidebarChats from "../components/SidebarChats";
+import SidebarChats from "../components/Chats/SidebarChats";
 import SidebarEditProfile from "../components/Profile/SidebarEditProfile";
 import { useAppDispatch, useAppSelector } from "../store/store";
 import { addChat, addChats, changeCountOfUnreadedMessages, changeTopMessage } from "../store/features/chatSlice";

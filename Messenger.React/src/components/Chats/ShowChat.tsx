@@ -1,13 +1,13 @@
 import { FC, MouseEvent, useEffect, useState } from "react";
-import Chat from "../Models/Chat";
-import Message from "../Models/Message";
-import { GetMessagesByChatIdService } from "../services/messages";
-import useIndexedDBMessenger from "../hooks/indexedDbMessenger.hook";
-import MediaMessage from "../Models/MediaMessage";
-import { useAppDispatch, useAppSelector } from "../store/store";
-import { setSelectedChat } from "../store/features/selectedChatSlice";
-import { changeCountOfUnreadedMessages, changeIsMessagesUpdate } from "../store/features/chatSlice";
-import { setMessages } from "../store/features/messageSlice";
+import Chat from "../../Models/Chat";
+import Message from "../../Models/Message";
+import { GetMessagesByChatIdService } from "../../services/messages";
+import useIndexedDBMessenger from "../../hooks/indexedDbMessenger.hook";
+import MediaMessage from "../../Models/MediaMessage";
+import { useAppDispatch, useAppSelector } from "../../store/store";
+import { setSelectedChat } from "../../store/features/selectedChatSlice";
+import { changeCountOfUnreadedMessages, changeIsMessagesUpdate } from "../../store/features/chatSlice";
+import { setMessages } from "../../store/features/messageSlice";
 
 interface ChatProps {
     Chat: Chat;
@@ -44,6 +44,7 @@ const ShowChat: FC<ChatProps> = ({ Chat, ChatName, ChatPhoto }) => {
 
                 const msgs: Message[] = await getMessagesByChatIdDB(Chat.id);
                 dispatch(setMessages({ messages: msgs }));
+                
                 ChatMessagesUpdate({ ...Chat, isMessagesUpdate: true });
                 dispatch(changeIsMessagesUpdate({ chatId: Chat.id, newIsMessagesUpdate: true }));
             }
