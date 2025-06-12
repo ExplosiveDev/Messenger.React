@@ -1,11 +1,11 @@
 import { createContext } from "react";
 import { HubConnection } from "@microsoft/signalr";
 
-interface AuthContextType {
+interface ConnectionContextType {
     connection: HubConnection | null;
 }
 
-const defaultAuthContext: AuthContextType = {
+const defaultAuthContext: ConnectionContextType = {
     connection: null,
 };
 

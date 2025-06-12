@@ -42,7 +42,6 @@ const Registration: FC = () => {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
     
-        // Валідація паролів перед відправкою
         if (formData.password !== formData.confirmPassword) {
             setErrors((prev) => ({
                 ...prev,
@@ -53,7 +52,6 @@ const Registration: FC = () => {
             setErrors((prev) => ({ ...prev, confirmPassword: '' }));
         }
     
-        // Валідація номера телефону
         if (errors.phone) {
             alert(errors.phone);
             return;
@@ -64,7 +62,9 @@ const Registration: FC = () => {
                 'http://192.168.0.100:5187/Users/register',
                 formData
             );
-            navigate('/login');
+            if(response.status === 200){
+                navigate('/login');
+            }
         } catch (error) {
             console.error('Registration failed:', error);
         }

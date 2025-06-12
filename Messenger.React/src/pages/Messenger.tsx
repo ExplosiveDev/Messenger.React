@@ -35,7 +35,7 @@ const Messenger: FC = () => {
     const { user, token } = useAppSelector(state => state.user);
     const dispatch = useAppDispatch();
 
-    const auth = useContext(AuthContext);
+    const connection = useContext(AuthContext);
 
     const [searchChatName, setSearchChat] = useState("");
     const [debouncedTerm, setDebouncedTerm] = useState(searchChatName);
@@ -81,7 +81,7 @@ const Messenger: FC = () => {
     }, [DbOpened])
 
     useEffect(() => {
-        if (!auth.connection) return;
+        if (!connection.connection) return;
         const handleReceiveMessage = async (message: Message, status: number) => {
             if (status == 200) {
                 if (DbOpened) {
@@ -94,8 +94,8 @@ const Messenger: FC = () => {
                                 userId: user.id,
                                 messegeIds: [message.id]
                             };
-                            if (auth.connection){
-                                auth.connection.invoke("MessagesReaded", messagesReadedPayload);
+                            if (connection.connection){
+                                connection.connection.invoke("MessagesReaded", messagesReadedPayload);
                             }
                         }
                         if (await getChat(message.chatId) == null) {
@@ -129,12 +129,12 @@ const Messenger: FC = () => {
             }
         };
 
-        auth.connection.on("ReceiveMessage", handleReceiveMessage);
+        connection.connection.on("ReceiveMessage", handleReceiveMessage);
 
         return () => {
-            auth.connection?.off("ReceiveNewChatName", handleReceiveMessage);
+            connection.connection?.off("ReceiveNewChatName", handleReceiveMessage);
         };
-    }, [auth.connection, DbOpened]);
+    }, [connection.connection, DbOpened]);
 
     useEffect(() => {
         const handler = setTimeout(() => {

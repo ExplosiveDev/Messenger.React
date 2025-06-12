@@ -50,8 +50,8 @@ const Login: FC = () => {
         }
 
         try {
-            const response = await axios.post<UserLoginReques>('http://192.168.0.100:5187/Users/login', UserLogin);
-            console.log("Login", response.data);
+            const response = await axios.post<UserLoginReques>
+                    ('http://192.168.0.100:5187/Users/login', UserLogin);
             const data = response.data;
             dispatch(login({token:data.token, user:data.user}))
             setUserLogin(initState);
@@ -102,11 +102,7 @@ const Login: FC = () => {
                     <div className="text-center mt-3">
                         <Link to="/forgot-password" className="text-light">Forgot password?</Link>
                     </div>
-                    <div className="text-center mt-3">
-                        <button className="btn btn-outline-light" type="button">
-                            <i className="fab fa-google"></i> Sign in with Google
-                        </button>
-                    </div>
+                    
                 </form>
             </div>
         </section>

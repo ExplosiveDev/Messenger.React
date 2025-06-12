@@ -7,5 +7,5 @@ export const useConnection = () => {
         _setConnection(newConnection);
     }
 
-    return {connection,setConnection};
+    return {connection, setConnection};
 }
